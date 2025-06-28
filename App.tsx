@@ -1,0 +1,97 @@
+
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import type { Chat } from '@google/genai';
+import { Header } from './components/Header';
+import { ChatHistory } from './components/ChatHistory';
+import { QueryInput } from './components/QueryInput';
+import { ResultsDisplay } from './components/ResultsDisplay';
+import { initChat, generateSqlAndSummary } from './services/geminiService';
+import { executeQuery } from './services/mockDbService';
+import type { Message, QueryResult, Status } from './types';
+
+const App: React.FC = () => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
+  const [status, setStatus] = useState<Status>('idle');
+  const [error, setError] = useState<string | null>(null);
+  const chatRef = useRef<Chat | null>(null);
+
+  useEffect(() => {
+    const initializeChat = () => {
+      try {
+        chatRef.current = initChat();
+        setMessages([
+          {
+            sender: 'ai',
+            type: 'text',
+            content: 'Welcome to the CCTNS Copilot. How can I help you access crime data today? You can ask things like "Show total crimes in Guntur" or "List arrests by Officer Kumar last month".'
+          }
+        ]);
+      } catch (e) {
+        console.error("Failed to initialize chat:", e);
+        setError("Could not initialize the AI Copilot. Please check your API key and refresh.");
+        setStatus('error');
+      }
+    };
+    initializeChat();
+  }, []);
+
+  const handleQuerySubmit = useCallback(async (query: string) => {
+    if (!query.trim()) return;
+
+    setStatus('loading');
+    setError(null);
+    setQueryResult(null);
+
+    const userMessage: Message = { sender: 'user', type: 'text', content: query };
+    setMessages(prev => [...prev, userMessage]);
+
+    if (!chatRef.current) {
+      setError("AI chat is not initialized.");
+      setStatus('error');
+      return;
+    }
+
+    try {
+      // Step 1: Generate SQL from natural language
+      setMessages(prev => [...prev, { sender: 'ai', type: 'status', content: 'Understood. Translating your request into a database query...' }]);
+      const { sql, summary } = await generateSqlAndSummary(chatRef.current, query);
+      
+      const aiSqlMessage: Message = { sender: 'ai', type: 'sql', content: sql, summary: summary };
+      setMessages(prev => [...prev.slice(0, -1), aiSqlMessage]);
+
+      // Step 2: Execute the query (mocked)
+      setMessages(prev => [...prev, { sender: 'ai', type: 'status', content: 'Query generated. Fetching data from the CCTNS database...' }]);
+      const results = await executeQuery(sql);
+      setQueryResult(results);
+
+       setMessages(prev => prev.slice(0, -1)); // Remove "Fetching data..." status
+
+
+    } catch (e) {
+      console.error(e);
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+      setError(`Failed to process your request. ${errorMessage}`);
+      const aiErrorMessage: Message = { sender: 'ai', type: 'error', content: `I'm sorry, I encountered an error trying to process that: ${errorMessage}` };
+      setMessages(prev => [...prev.slice(0,-1), aiErrorMessage]);
+    } finally {
+      setStatus('idle');
+    }
+  }, []);
+
+  return (
+    <div className="flex flex-col h-screen font-sans bg-gray-50">
+      <Header />
+      <main className="flex-1 overflow-hidden flex">
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <ChatHistory messages={messages} />
+          {error && <div className="px-4 py-2 text-red-700 bg-red-100 border-t border-red-200">{error}</div>}
+          <QueryInput onSubmit={handleQuerySubmit} status={status} />
+        </div>
+        <ResultsDisplay result={queryResult} status={status} />
+      </main>
+    </div>
+  );
+};
+
+export default App;
