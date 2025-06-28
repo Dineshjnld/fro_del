@@ -1,7 +1,0 @@
-{
-  "name": "CCTNS Copilot",
-  "description": "An AI-powered copilot to query the Crime and Criminal Tracking Network & Systems (CCTNS) database using natural language. It translates user queries into SQL, executes them against a mock database, and displays the results in tables and charts.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
-}
