@@ -152,65 +152,487 @@ embeddings:
 
 # CCTNS Database Schema Configuration
 cctns_schema:
-  database_type: "oracle"
-  schema_version: "2.0"
+  database_type: "oracle" # This remains Oracle as per problem statement
+  schema_version: "3.0" # Updated version to reflect new schema
   
-  # Master Tables
   tables:
-    - name: "DISTRICT_MASTER"
-      type: "master"
-      columns: ["district_id", "district_code", "district_name", "state_code", "created_date"]
-      primary_key: "district_id"
-      description: "District master data for administrative divisions"
-      
-    - name: "STATION_MASTER"
-      type: "master"
-      columns: ["station_id", "station_name", "station_code", "district_id", "latitude", "longitude"]
-      primary_key: "station_id"
-      foreign_keys: 
-        - column: "district_id"
-          references: "DISTRICT_MASTER.district_id"
-      description: "Police station master data"
-      
-    - name: "OFFICER_MASTER"
-      type: "master"
-      columns: ["officer_id", "officer_name", "rank", "badge_number", "station_id", "mobile_number"]
-      primary_key: "officer_id"
-      foreign_keys:
-        - column: "station_id"
-          references: "STATION_MASTER.station_id"
-      description: "Police officer master data"
-      
-    - name: "CRIME_TYPE_MASTER"
-      type: "master"
-      columns: ["crime_type_id", "crime_code", "crime_description", "ipc_section", "severity_level"]
-      primary_key: "crime_type_id"
-      description: "Crime type classifications and IPC sections"
-      
-    # Transaction Tables
-    - name: "FIR"
+    # Transaction Tables from new schema
+    - name: "T_FIR_REGISTRATION"
       type: "transaction"
-      columns: ["fir_id", "fir_number", "district_id", "station_id", "crime_type_id", "incident_date", "report_date", "status", "complainant_name"]
-      primary_key: "fir_id"
+      description: "Stores FIR (First Information Report) registration details."
+      columns:
+        - {name: "FIR_REG_NUM", type: "NUMBER(24,0)", nullable: false, description: "Primary Key - Registration Number - PS Code + Last 2 digits of year + 4 digit St.No"}
+        - {name: "PETITION_ID", type: "NUMBER(24,0)", nullable: true, description: "Petition ID if any"}
+        - {name: "LANG_CO", type: "NUMBER(10,0)", nullable: false, description: "99 - English - Can be considered by default"}
+        - {name: "STATE_CO", type: "NUMBER(10,0)", nullable: false, description: "STATE NAME CAN BE FOUND IN M_STATE MASTER TABLE"}
+        - {name: "DISTRICT_CO", type: "NUMBER(10,0)", nullable: false, description: "DISTRICT NAME CAN BE FOUND IN M_DISTRICT MASTER TABLE"}
+        - {name: "WARD_VILLAGE_CO", type: "NUMBER(10,0)", nullable: false, description: "Ward or Village code"}
+        - {name: "PS_CO", type: "NUMBER(10,0)", nullable: false, description: "PS NAME CAN BE FOUND IN M_POLICE_UNITS MASTER TABLE WITH UNIT_CO=PS_CO"}
+        - {name: "FIR_SINO", type: "NUMBER(10,0)", nullable: false, description: "FIR Serial Number"}
+        - {name: "REG_YEAR", type: "NUMBER(10,0)", nullable: false, description: "Registration Year"}
+        - {name: "REG_OT", type: "DATE", nullable: false, description: "Registration Date and Time"}
+        - {name: "FIR_ACTION", type: "CHAR(1 CHAR)", nullable: false, description: "FIR Action Taken"}
+        - {name: "STATUS_REASON", type: "VARCHAR2(1000 CHAR)", nullable: true, description: "Reason for current status"}
+        - {name: "GO_NUM", type: "NUMBER(25,0)", nullable: true, description: "Government Order Number"}
+        - {name: "GO_EVITY_OT", type: "DATE", nullable: true, description: "Government Order Date"}
+        - {name: "CRIME_CLASS_CO", type: "NUMBER(10,0)", nullable: false, description: "CRIME_CLASS VALUE CAN BE FOUND FROM M_CRIME_CLASS BASED ON CRIME_CLASS_CO"}
+        - {name: "OTH_CRIME_CLASS", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Other crime classification if any"}
+        - {name: "GRAVE_TYPE_CO", type: "NUMBER(10,0)", nullable: false, description: "M_MASTER_DATA TABLE - MASTER_TYPE_CO=139, Grave Type code"}
+        - {name: "NATURE_OF_OFFENCE", type: "VARCHAR2(100 CHAR)", nullable: false, description: "Nature of the offence"}
+        - {name: "PROP_INVOLVE_OR_NOT_CHK", type: "CHAR(1 CHAR)", nullable: false, description: "Property involved (Y/N)"}
+        - {name: "PROP_LOST_NOT_MOVIM", type: "CHAR(1 CHAR)", nullable: false, description: "Property lost not movable (Y/N)"}
+        - {name: "NO_ACCUSED_CHK", type: "CHAR(1 CHAR)", nullable: false, description: "No accused identified (Y/N)"}
+        - {name: "UNKNOWN_ACCUSED_CHK", type: "CHAR(1 CHAR)", nullable: false, description: "Accused is unknown (Y/N)"}
+        - {name: "CASE_RELATED_UCCENSE_NO_CHK", type: "CHAR(1 CHAR)", nullable: false, description: "Case related to license number (Y/N)"}
+        - {name: "CASE_RELATED_UCCENSE_NO", type: "VARCHAR2(50 CHAR)", nullable: true, description: "License number if applicable"}
+        - {name: "IO_DISTRICT", type: "NUMBER(10,0)", nullable: true, description: "Investigating Officer's district code"}
+        - {name: "ID_PS", type: "NUMBER(10,0)", nullable: true, description: "Investigating Officer's police station code"}
+        - {name: "MEMO_REF_DOWRY_OTH_SCST", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Memo reference for Dowry/SC-ST cases"}
+        - {name: "MEMO_DATE", type: "DATE", nullable: true, description: "Memo date"}
+        - {name: "COMPIL_REC_NUM", type: "NUMBER(24,0)", nullable: true, description: "Complainant record number"}
+        - {name: "COMPLIANT_PERSON_CO", type: "NUMBER(24,0)", nullable: true, description: "Complainant person code"}
+        - {name: "COMPIL_SRC", type: "NUMBER(10,0)", nullable: true, description: "Source of complaint code"}
+        - {name: "INFORM_TYPE", type: "NUMBER(10,0)", nullable: true, description: "Type of information code"}
+        - {name: "INFORM_RECV_OT", type: "DATE", nullable: true, description: "Information received date and time"}
+        - {name: "INFOR_RECV_DEEC", type: "VARCHAR2(1000 CHAR)", nullable: true, description: "Information received description"}
+        - {name: "DELAY_REASON_COMPL", type: "VARCHAR2(1000 CHAR)", nullable: true, description: "Reason for delay in complaint"}
+        - {name: "COURT_CO", type: "NUMBER(10,0)", nullable: true, description: "Court code"}
+        - {name: "SRC_COUNT_NAME", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Source court name"}
+        - {name: "SEC_COUNT_GROBEA_NO", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Secondary court order number"}
+        - {name: "PERSONS_DEAD_COUNT", type: "NUMBER(10,0)", nullable: true, description: "Number of persons dead"}
+        - {name: "SERIOUSLY_HURT_COUNT", type: "NUMBER(10,0)", nullable: true, description: "Number of persons seriously hurt"}
+        - {name: "SIMPLY_HURT_COUNT", type: "NUMBER(10,0)", nullable: true, description: "Number of persons simply hurt"}
+        - {name: "NON_MUDIOS_COUNT", type: "NUMBER(10,0)", nullable: true, description: "Number of non-injured persons"} # Assuming NON_INJURED_COUNT
+        - {name: "DECEASED_PERSON_COUNT", type: "NUMBER(10,0)", nullable: true, description: "Count of deceased persons (might be redundant with PERSONS_DEAD_COUNT)"}
+        - {name: "ANY_PROP_OF_INTEREST", type: "CHAR(8 CHAR)", nullable: false, description: "Any property of interest (Y/N)"}
+        - {name: "PROPERTY_STOLEN_DETAILS", type: "VARCHAR2(1000 CHAR)", nullable: true, description: "Details of stolen property"}
+        - {name: "PROPERTY_TYPE_CO", type: "NUMBER(10,0)", nullable: true, description: "Property type code"}
+        - {name: "PROPERTY_VALUE", type: "NUMBER(14,0)", nullable: true, description: "Value of property"}
+        - {name: "IS_FIR_UNICEO", type: "CHAR(8 CHAR)", nullable: false, description: "Is FIR unique (Y/N)"} # Assuming IS_FIR_LINKED from original JSON
+        - {name: "LINKED_TO_CASE_NUM", type: "NUMBER(24,0)", nullable: true, description: "Linked case number if any"}
+        - {name: "ACTION_TAKEN_CO", type: "NUMBER(10,0)", nullable: false, description: "Action taken code"}
+        - {name: "ACTION_TAKEN_REASON", type: "VARCHAR2(1000 CHAR)", nullable: true, description: "Reason for action taken"}
+        - {name: "TRANSFER_COUNT_REF_NUM", type: "VARCHAR2(1000 CHAR)", nullable: true, description: "Transfer court reference number"}
+        - {name: "TRANSFER_STATE", type: "NUMBER(10,0)", nullable: true, description: "Transfer to state code"}
+        - {name: "TRANSFER_DISTRICT", type: "NUMBER(10,0)", nullable: true, description: "Transfer to district code"}
+        - {name: "TRANSFER_PS", type: "NUMBER(10,0)", nullable: true, description: "Transfer to police station code"}
+        - {name: "REFUSED_SECTION_CO", type: "VARCHAR2(1000 CHAR)", nullable: true, description: "Refused section code"}
+        - {name: "REFUSAL_REASON", type: "VARCHAR2(1000 CHAR)", nullable: true, description: "Reason for refusal"}
+        - {name: "ASSIGNED_IO_CO", type: "NUMBER(24,0)", nullable: false, description: "Assigned Investigating Officer code"}
+        - {name: "IS_FIR_FREZERO", type: "CHAR(8 CHAR)", nullable: false, description: "Is FIR freezed (Y/N)"}
+        - {name: "FIR_STATUS", type: "NUMBER(10,0)", nullable: false, description: "M_MASTER_DATA TABLE - MASTER_TYPE_CO=121, FIR Status code"}
+        - {name: "IS_FIR_SECRET", type: "CHAR(8 CHAR)", nullable: false, description: "Is FIR secret (Y/N)"}
+        - {name: "FIR_SECRET_OT", type: "DATE", nullable: true, description: "FIR secret date and time"}
+        - {name: "FIR_REG_OFFICER_CO", type: "NUMBER(24,0)", nullable: false, description: "FIR registering officer code"}
+        - {name: "RECORD_STATUS", type: "CHAR(8 CHAR)", nullable: true, description: "Record status"}
+        - {name: "RECORD_CREATOR_ON", type: "DATE", nullable: false, description: "Record created date"} # Assuming RECORD_CREATED_ON
+        - {name: "RECORD_CREATOR_OUT", type: "VARCHAR2(1000 CHAR)", nullable: false, description: "Record creator ID/Name"} # Assuming RECORD_CREATED_BY
+        - {name: "RECORD_UPDATED_ON", type: "DATE", nullable: false, description: "Record updated date"}
+        - {name: "RECORD_UPDATED_BY", type: "VARCHAR2(1000 CHAR)", nullable: false, description: "Record updater ID/Name"}
+        - {name: "IS_TRANSFER_AFTER_REG", type: "CHAR(8 CHAR)", nullable: false, description: "Is transfer after registration (Y/N)"}
+        - {name: "IS_TRANSFER_RE_REGISTERED", type: "CHAR(8 CHAR)", nullable: false, description: "Is transfer re-registered (Y/N)"}
+        - {name: "AFTER_REG_TRANSFER_REASON", type: "VARCHAR2(1000 CHAR)", nullable: true, description: "Reason for transfer after registration"}
+        - {name: "AFTER_REG_TRANSFER_OT", type: "DATE", nullable: true, description: "Date of transfer after registration"}
+        - {name: "IS_ACTIS_SC_MODIFIED", type: "CHAR(1 CHAR)", nullable: false, description: "Is Act/Section modified (Y/N)"}
+        - {name: "IS_MAJ_MIN_MODIFIED", type: "CHAR(1 CHAR)", nullable: false, description: "Is Major/Minor head modified (Y/N)"}
+        - {name: "IS_ALTERATION_DONE", type: "CHAR(1 CHAR)", nullable: false, description: "Is alteration done (Y/N)"}
+        - {name: "IS_FIR_TRANSFERED", type: "CHAR(1 CHAR)", nullable: false, description: "Is FIR transferred (Y/N)"}
+        - {name: "FIR_STATUS_UPDATE_OT", type: "DATE", nullable: false, description: "FIR status update date and time"}
+        - {name: "FIR_ISSING_BY", type: "NUMBER(24,0)", nullable: false, description: "FIR issuing officer code"} # Assuming FIR_ISSUED_BY
+        - {name: "DATE_TIME_DISPATCH_TO_COUNT", type: "DATE", nullable: true, description: "Date/time dispatched to court"}
+        - {name: "INQUEST_NUMBER", type: "VARCHAR2(200 CHAR)", nullable: true, description: "Inquest number"}
+        - {name: "IS_DORSITION_DONE", type: "CHAR(1 CHAR)", nullable: false, description: "Is disposition done (Y/N)"} # Assuming IS_DISPOSITION_DONE
+        - {name: "RE_REGISTERED_FIR_REG", type: "NUMBER(24,0)", nullable: true, description: "Re-registered FIR number"}
+        - {name: "FIR_CONTENTS", type: "CLOB", nullable: false, description: "Full FIR content"}
+        - {name: "BRIEF_FACTS_LANG", type: "CHAR(1 BYTE)", nullable: false, description: "Language of brief facts"}
+        - {name: "VICTIM_RIG_CHECK", type: "VARCHAR2(100 BYTE)", nullable: true, description: "Victim rights check"}
+        - {name: "IOL_OP_VICTIMES_ENTRD", type: "NUMBER(4,0)", nullable: true, description: "Number of victims entered"} # Assuming NO_OF_VICTIMS_ENTRD
+        - {name: "MAM_CHT", type: "NUMBER(10,0)", nullable: true, description: "Man count"} # Assuming MAN_CNT
+        - {name: "WOMAN_CHT", type: "NUMBER(10,0)", nullable: true, description: "Woman count"}
+        - {name: "BOY_CHT", type: "NUMBER(10,0)", nullable: true, description: "Boy count"}
+        - {name: "GIRL_CHT", type: "NUMBER(10,0)", nullable: true, description: "Girl count"}
+        - {name: "FIR_ASSIGN_IO_CO", type: "NUMBER(24,0)", nullable: true, description: "FIR assigned IO code (re-assignment)"}
+        - {name: "IRAQ_ACCONT_ID", type: "VARCHAR2(30 BYTE)", nullable: true, description: "IRAD Account ID"} # Assuming IRAD_ACCOUNT_ID
+        - {name: "CRIME_CLASS_CO_FIR", type: "NUMBER(5,0)", nullable: true, description: "Crime class code for FIR"}
+        - {name: "IRAQ_CONSUME_TEG", type: "VARCHAR2(4 BYTE)", nullable: true, description: "IRAD Consume Flag"} # Assuming IRAD_CONSUME_FLG
+        - {name: "TRANSEEMPER_CMT", type: "NUMBER(10,0)", nullable: true, description: "Transgender count"} # Assuming TRANSGENDER_CNT
+      primary_key: "FIR_REG_NUM"
       foreign_keys:
-        - column: "district_id"
-          references: "DISTRICT_MASTER.district_id"
-        - column: "station_id"
-          references: "STATION_MASTER.station_id"
-        - column: "crime_type_id"
-          references: "CRIME_TYPE_MASTER.crime_type_id"
-      description: "First Information Report records"
-      
-    - name: "ARREST"
+        - {column: "STATE_CO", references: "M_STATE(STATE_CD)"}
+        - {column: "DISTRICT_CO", references: "M_DISTRICT(DISTRICT_CD)"}
+        - {column: "PS_CO", references: "M_POLICE_UNITS(UNIT_CO)"}
+        - {column: "CRIME_CLASS_CO", references: "M_CRIME_CLASS(CRIME_CLASS_CD)"}
+        - {column: "GRAVE_TYPE_CO", references: "M_MASTER_DATA(MASTER_CD)"} # Assuming FK to M_MASTER_DATA
+        - {column: "FIR_STATUS", references: "M_MASTER_DATA(MASTER_CD)"} # Assuming FK to M_MASTER_DATA
+
+    - name: "T_FIR_ACT_SECTION"
       type: "transaction"
-      columns: ["arrest_id", "fir_id", "officer_id", "arrested_person_name", "arrest_date", "arrest_location"]
-      primary_key: "arrest_id"
+      description: "Stores Acts and Sections applied in an FIR."
+      columns:
+        - {name: "FIR_ACT_SRNO", type: "NUMBER(24,0)", nullable: false, description: "Primary Key"}
+        - {name: "LANG_CD", type: "NUMBER(10,0)", nullable: false, description: "99 - English - Can be considered by default"}
+        - {name: "FIR_REG_NUM", type: "NUMBER(24,0)", nullable: false, description: "Foreign Key from T_FIR_REGISTRATION table"}
+        - {name: "ACT_CO", type: "NUMBER(10,0)", nullable: false, description: "Act Value can be extracted from M_ACT - ACT_LONG & ACT_SHORT COLUMNS for given ACT_CO"}
+        - {name: "SECTION_CO", type: "NUMBER(10,0)", nullable: true, description: "Section Value can be extracted from M_SECTION - SHORT_DESC & DESCRIPTION COLUMNS for given SECTION_CO"}
+        - {name: "READ_WITH_FUG", type: "CHAR(1 CHAR)", nullable: false, description: "Read with flag"} # Assuming READ_WITH_FLG
+        - {name: "FIR_ALTER_STATUS", type: "CHAR(4 CHAR)", nullable: false, description: "FIR alteration status"}
+        - {name: "RECORD_STATUS", type: "CHAR(4 CHAR)", nullable: true, description: "Record status"}
+        - {name: "RECORD_CREATED_ON", type: "DATE", nullable: false, description: "Record created date"}
+        - {name: "RECORD_CREATED_BY", type: "VARCHAR2(200 CHAR)", nullable: false, description: "Record creator ID/Name"}
+        - {name: "RECORD_UPDATED_ON", type: "DATE", nullable: false, description: "Record updated date"}
+        - {name: "RECORD_UPDATED_BY", type: "VARCHAR2(200 CHAR)", nullable: false, description: "Record updater ID/Name"}
+        - {name: "MODULE_NAME", type: "VARCHAR2(200 CHAR)", nullable: false, description: "Module name"}
+        - {name: "FIR_ALTERATION_SRNO", type: "NUMBER(24,0)", nullable: true, description: "FIR alteration serial number"}
+        - {name: "OPERATION_FLAG", type: "CHAR(1 CHAR)", nullable: false, description: "Operation flag (e.g. I, U, D)"}
+        - {name: "CS_FR_SRNO", type: "NUMBER(25,0)", nullable: true, description: "Charge sheet FIR serial number"}
+      primary_key: "FIR_ACT_SRNO"
       foreign_keys:
-        - column: "fir_id"
-          references: "FIR.fir_id"
-        - column: "officer_id"
-          references: "OFFICER_MASTER.officer_id"
-      description: "Arrest records linked to FIRs"
+        - {column: "FIR_REG_NUM", references: "T_FIR_REGISTRATION(FIR_REG_NUM)"}
+        - {column: "ACT_CO", references: "M_ACT(ACT_CD)"} # Corrected to ACT_CD
+        - {column: "SECTION_CO", references: "M_SECTION(SECTION_CD)"} # Corrected to SECTION_CD
+
+    - name: "T_FIR_MAJOR_MINOR_HEADS"
+      type: "transaction"
+      description: "Stores Major and Minor crime heads associated with an FIR."
+      columns:
+        - {name: "FIR_MJMN_SRNO", type: "NUMBER(24,0)", nullable: false, description: "Primary Key"}
+        - {name: "LANG_CD", type: "NUMBER(10,0)", nullable: false, description: "99 - English - Can be considered by default"}
+        - {name: "FIR_REG_NUM", type: "NUMBER(24,0)", nullable: false, description: "Foreign Key from T_FIR_REGISTRATION table"}
+        - {name: "MAJOR_HEAD_CODE", type: "NUMBER(10,0)", nullable: true, description: "MAJOR_HEAD Value can be extracted from M_MAJOR_HEAD for given MAJOR_HEAD_CODE"}
+        - {name: "OTH_MAJOR_HEAD", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Other major head description"}
+        - {name: "MINOR_HEAD_CD", type: "NUMBER(10,0)", nullable: true, description: "MINOR_HEAD Value can be extracted from M_MINOR_HEAD for given MINOR_HEAD_CD"} # Corrected table name
+        - {name: "FIR_ALTER_STATUS", type: "CHAR(4 CHAR)", nullable: true, description: "FIR alteration status"}
+        - {name: "RECORD_STATUS", type: "CHAR(4 CHAR)", nullable: true, description: "Record status"}
+        - {name: "RECORD_CREATED_ON", type: "DATE", nullable: false, description: "Record created date"}
+        - {name: "RECORD_CREATED_BY", type: "VARCHAR2(200 CHAR)", nullable: false, description: "Record creator ID/Name"}
+        - {name: "RECORD_UPDATED_ON", type: "DATE", nullable: false, description: "Record updated date"}
+        - {name: "RECORD_UPDATED_BY", type: "VARCHAR2(200 CHAR)", nullable: false, description: "Record updater ID/Name"}
+        - {name: "IS_MAJOR_PRIMARY_CHK", type: "CHAR(1 CHAR)", nullable: false, description: "Y or N for primary major or not"}
+        - {name: "FIR_ALTERATION_SRNO", type: "NUMBER(24,0)", nullable: true, description: "FIR alteration serial number"}
+        - {name: "OPERATION_FLAG", type: "CHAR(1 CHAR)", nullable: true, description: "Operation flag"}
+      primary_key: "FIR_MJMN_SRNO"
+      foreign_keys:
+        - {column: "FIR_REG_NUM", references: "T_FIR_REGISTRATION(FIR_REG_NUM)"}
+        - {column: "MAJOR_HEAD_CODE", references: "M_MAJOR_HEAD(MAJOR_HEAD_CODE)"}
+        - {column: "MINOR_HEAD_CD", references: "M_MINOR_HEAD(MINOR_HEAD_CD)"}
+
+    - name: "T_PERSON_INFO"
+      type: "transaction" # Or master if persons are uniquely identified across system
+      description: "Stores information about persons involved (complainants, accused, victims, etc.)."
+      columns:
+        - {name: "PERSON_CODE", type: "NUMBER(24,0)", nullable: false, description: "Primary Key"}
+        - {name: "LANG_CD", type: "NUMBER(10,0)", nullable: false, description: "Language code"}
+        - {name: "PERSON_TYPE_CD", type: "NUMBER(10,0)", nullable: false, description: "Actual value of PERSON_TYPE can be extracted M_PERSON_TYPES for given person_type_cd"}
+        - {name: "REG_YEAR", type: "NUMBER(10,0)", nullable: true, description: "Registration year (related to person)"}
+        - {name: "FIRST_NAME", type: "VARCHAR2(640 CHAR)", nullable: false, description: "First name"}
+        - {name: "MIDDLE_NAME", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Middle name"}
+        - {name: "LAST_NAME", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Last name"}
+        - {name: "DOB", type: "DATE", nullable: true, description: "Date of Birth"}
+        - {name: "AGE", type: "NUMBER(10,0)", nullable: true, description: "Age"}
+        - {name: "FATHER_NAME", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Father's name"}
+        - {name: "RELATION_TYPE_CD", type: "NUMBER(10,0)", nullable: true, description: "Relation type code"}
+        - {name: "OCCUPATION_CD", type: "NUMBER(10,0)", nullable: true, description: "M_MASTER_DATA TABLE - MASTER_TYPE_CD=200, Occupation code"}
+        - {name: "OTH_OCCUPATION", type: "VARCHAR2(50 CHAR)", nullable: true, description: "Other occupation"}
+        - {name: "GENDER_CD", type: "NUMBER(10,0)", nullable: false, description: "M_MASTER_DATA TABLE - MASTER_TYPE_CD=138, Gender code"}
+        - {name: "CASTE_TRIBE_CD", type: "NUMBER(10,0)", nullable: true, description: "Caste/Tribe code"}
+        - {name: "SUB_CASTE_CD", type: "NUMBER(10,0)", nullable: true, description: "Sub-caste code"}
+        - {name: "RELIGION_CD", type: "NUMBER(10,0)", nullable: true, description: "Religion code"}
+        - {name: "NATIONALITY_CD", type: "NUMBER(10,0)", nullable: true, description: "M_MASTER_DATA TABLE - MASTER_TYPE_CD=190, Nationality code"}
+        - {name: "EDU_QUAL_CD", type: "NUMBER(10,0)", nullable: true, description: "M_MASTER_DATA TABLE - MASTER_TYPE_CD=101, Education qualification code"}
+        - {name: "OTH_EQU_QUAL", type: "VARCHAR2(50 CHAR)", nullable: true, description: "Other education qualification"}
+        - {name: "TELEPHONE_OFF", type: "NUMBER(20,0)", nullable: true, description: "Office telephone"}
+        - {name: "TELEPHONE_RESIDENCE", type: "NUMBER(20,0)", nullable: true, description: "Residence telephone"}
+        - {name: "MOBILE_1", type: "NUMBER(24,0)", nullable: true, description: "Mobile number 1"}
+        - {name: "FAX_NO", type: "NUMBER(24,0)", nullable: true, description: "Fax number"}
+        - {name: "EMAIL", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Email ID"}
+        - {name: "ALTERNATIVE_EMAIL", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Alternative email ID"}
+        - {name: "INJURY_TYPE_CD", type: "NUMBER(10,0)", nullable: true, description: "Injury type code"}
+        - {name: "INJURY_CLASS_CD", type: "NUMBER(10,0)", nullable: true, description: "Injury classification code"}
+        - {name: "TYPE_OF_INJURY_CD", type: "NUMBER(10,0)", nullable: true, description: "Type of injury code"}
+        - {name: "IS_VICTIM_POLICE", type: "CHAR(4 CHAR)", nullable: true, description: "Is victim a police personnel (Y/N)"}
+        - {name: "DESIGNATION_CD", type: "NUMBER(10,0)", nullable: true, description: "Designation code if police"}
+        - {name: "IS_ON_DUTY", type: "CHAR(1 CHAR)", nullable: true, description: "Was on duty (Y/N)"}
+        - {name: "TYPE_OF_DUTY_CD", type: "NUMBER(10,0)", nullable: true, description: "Type of duty code"}
+        - {name: "STATE_CD", type: "NUMBER(10,0)", nullable: true, description: "STATE NAME CAN BE FOUND IN M_STATE MASTER TABLE"}
+        - {name: "DISTRICT_CD", type: "NUMBER(10,0)", nullable: true, description: "DISTRICT NAME CAN BE FOUND IN M_DISTRICT MASTER TABLE"}
+        - {name: "PS_CD", type: "NUMBER(10,0)", nullable: true, description: "PS NAME CAN BE FOUND IN M_POLICE_UNITS MASTER TABLE WITH UNIT_CD=PS_CD"}
+        - {name: "RELATIVE_NAME", type: "VARCHAR2(160 CHAR)", nullable: true, description: "Relative's name"}
+        - {name: "RELATIVE_ALLAS", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Relative's alias"} # Assuming RELATIVE_ALIAS
+        - {name: "YOB", type: "NUMBER(10,0)", nullable: true, description: "Year of Birth"}
+        - {name: "MOBILE_2", type: "NUMBER(24,0)", nullable: true, description: "Mobile number 2"}
+        - {name: "AGE_PROOF_REQ", type: "CHAR(1 CHAR)", nullable: true, description: "Age proof required (Y/N)"}
+        - {name: "AGE_FROM_YES", type: "NUMBER(10,0)", nullable: true, description: "Age from (if range)"} # Assuming AGE_FROM_YRS
+        - {name: "AGE_TO_YES", type: "NUMBER(10,0)", nullable: true, description: "Age to (if range)"} # Assuming AGE_TO_YRS
+        - {name: "LANG_DIALECT_CD", type: "NUMBER(10,0)", nullable: true, description: "Language/Dialect code"}
+        - {name: "CATEGORY_CD", type: "NUMBER(10,0)", nullable: true, description: "Category code"}
+        - {name: "FULL_NAME", type: "VARCHAR2(350 CHAR)", nullable: false, description: "Full name of person"}
+        - {name: "LIVING_STATUS_CD", type: "NUMBER(10,0)", nullable: true, description: "Living status code"}
+        - {name: "MARITAL_STATUS_CD", type: "NUMBER(10,0)", nullable: true, description: "Marital status code"}
+        - {name: "INCOME_GROUP_CD", type: "NUMBER(10,0)", nullable: true, description: "Income group code"}
+        - {name: "AGE_PROOF_TYPE_CD", type: "NUMBER(10,0)", nullable: true, description: "Age proof type code"}
+        - {name: "BLOOD_GROUP_CD", type: "NUMBER(10,0)", nullable: true, description: "Blood group code"}
+        - {name: "CONFIRMED_STATUS", type: "CHAR(1 CHAR)", nullable: true, description: "Confirmed status"}
+        - {name: "RECORD_STATUS", type: "CHAR(4 CHAR)", nullable: false, description: "Record status"}
+        - {name: "RECORD_CREATED_ON", type: "DATE", nullable: false, description: "Record created date"}
+        - {name: "RECORD_CREATED_BY", type: "VARCHAR2(200 CHAR)", nullable: false, description: "Record creator ID/Name"}
+        - {name: "RECORD_UPDATED_ON", type: "DATE", nullable: false, description: "Record updated date"}
+        - {name: "RECORD_UPDATED_BY", type: "VARCHAR2(200 CHAR)", nullable: false, description: "Record updater ID/Name"}
+        - {name: "IS_KNOWN", type: "CHAR(1 CHAR)", nullable: true, description: "Is person known (Y/N)"}
+        - {name: "ALLAS_NAME", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Alias name"} # Assuming ALIAS_NAME
+        - {name: "EEECOPS_ID", type: "NUMBER(25,0)", nullable: true, description: "eCOPS ID"}
+        - {name: "MOBILE_COUNTRY_CODE", type: "NUMBER(3,0)", nullable: true, description: "Mobile country code"}
+        - {name: "RESIDENCE", type: "NUMBER(10,0)", nullable: true, description: "Residence code/type"}
+        - {name: "FIR_NUM", type: "NUMBER", nullable: true, description: "Foreign Key from T_FIR_REGISTRATION table (linking person to specific FIR)"}
+        - {name: "PET_ID_NEW", type: "VARCHAR2(64 BYTE)", nullable: true, description: "New Petition ID"}
+        - {name: "IRAD_ACCONT_ID", type: "VARCHAR2(30 BYTE)", nullable: true, description: "IRAD Account ID"} # Assuming IRAD_ACCOUNT_ID
+        - {name: "IRAD_CONSUME_FLG", type: "VARCHAR2(4 BYTE)", nullable: true, description: "IRAD Consume Flag"}
+        - {name: "BANK_NAME", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Bank name"}
+        - {name: "BANK_ACC_NUM", type: "NUMBER", nullable: true, description: "Bank account number"}
+        - {name: "BANK_IFSC_CODE", type: "VARCHAR2(50 CHAR)", nullable: true, description: "Bank IFSC code"}
+        - {name: "BANK_ACC_TYPE", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Bank account type"}
+        - {name: "FB_ID", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Facebook ID"}
+        - {name: "WHATSAPP_NUM", type: "NUMBER", nullable: true, description: "WhatsApp number"}
+        - {name: "INSTA_ID", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Instagram ID"}
+        - {name: "TWITTER_ID", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Twitter ID"}
+        - {name: "LINKON_ID", type: "VARCHAR2(100 CHAR)", nullable: true, description: "LinkedIn ID"} # Assuming LINKEDIN_ID
+      primary_key: "PERSON_CODE"
+      foreign_keys:
+        - {column: "PERSON_TYPE_CD", references: "M_PERSON_TYPES(PERSON_TYPE_CO)"}
+        - {column: "OCCUPATION_CD", references: "M_MASTER_DATA(MASTER_CD)"}
+        - {column: "GENDER_CD", references: "M_MASTER_DATA(MASTER_CD)"}
+        - {column: "NATIONALITY_CD", references: "M_MASTER_DATA(MASTER_CD)"}
+        - {column: "EDU_QUAL_CD", references: "M_MASTER_DATA(MASTER_CD)"}
+        - {column: "STATE_CD", references: "M_STATE(STATE_CD)"}
+        - {column: "DISTRICT_CD", references: "M_DISTRICT(DISTRICT_CD)"}
+        - {column: "PS_CD", references: "M_POLICE_UNITS(UNIT_CO)"}
+        - {column: "FIR_NUM", references: "T_FIR_REGISTRATION(FIR_REG_NUM)"}
+
+    - name: "T_FIR_COMPLAINANT_INFO"
+      type: "transaction"
+      description: "Links FIRs to Complainants (who are persons in T_PERSON_INFO)."
+      columns:
+        - {name: "FIR_REG_NUM", type: "NUMBER(24,0)", nullable: true, description: "Foreign Key from T_FIR_REGISTRATION table"}
+        - {name: "LANG_CD", type: "NUMBER(10,0)", nullable: true, description: "Language code"}
+        - {name: "TIME_DELAY_CD", type: "NUMBER(10,0)", nullable: true, description: "Time delay code"}
+        - {name: "PERSON_CODE", type: "NUMBER(24,0)", nullable: true, description: "Foreign Key from T_PERSON_INFO table (Complainant)"}
+        - {name: "VICTIM_COMPLAINANT_CHK", type: "CHAR(1 CHAR)", nullable: true, description: "Is complainant also a victim (Y/N)"}
+        - {name: "RECORD_STATUS", type: "CHAR(4 CHAR)", nullable: true, description: "Record status"}
+        - {name: "RECORD_CREATED_ON", type: "DATE", nullable: true, description: "Record created date"}
+        - {name: "RECORD_CREATED_BY", type: "VARCHAR2(200 CHAR)", nullable: true, description: "Record creator ID/Name"}
+        - {name: "RECORD_UPDATED_ON", type: "DATE", nullable: true, description: "Record updated date"}
+        - {name: "RECORD_UPDATED_BY", type: "VARCHAR2(200 CHAR)", nullable: true, description: "Record updater ID/Name"}
+      primary_key: null # This seems to be a linking table, composite PK likely (FIR_REG_NUM, PERSON_CODE)
+      foreign_keys:
+        - {column: "FIR_REG_NUM", references: "T_FIR_REGISTRATION(FIR_REG_NUM)"}
+        - {column: "PERSON_CODE", references: "T_PERSON_INFO(PERSON_CODE)"}
+
+    - name: "T_ACCUSED_INFO"
+      type: "transaction"
+      description: "Stores information about accused persons related to an FIR."
+      columns:
+        - {name: "ACCUSED_SRNO", type: "NUMBER(24,0)", nullable: false, description: "Primary Key"}
+        - {name: "LANG_CD", type: "NUMBER(10,0)", nullable: false, description: "99 - English - Can be considered by default"}
+        - {name: "FIR_REG_NUM", type: "NUMBER(24,0)", nullable: false, description: "Foreign Key from T_FIR_REGISTRATION table"}
+        - {name: "PERSON_CODE", type: "NUMBER(24,0)", nullable: true, description: "Foreign Key from T_PERSON_INFO table (Accused Person details)"}
+        - {name: "ACCUSED_TYPE_FLG", type: "CHAR(1 BYTE)", nullable: false, description: "A- Accused, S-Suspect, R-Respondent"}
+        - {name: "IS_ACCUSED_POLICE", type: "CHAR(4 CHAR)", nullable: false, description: "Y or N, Is accused a police officer"}
+        - {name: "ACC_POLICE_CD", type: "NUMBER(25,0)", nullable: true, description: "Accused police code if applicable"}
+        - {name: "ACCUSED_PHOTO", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Path or ID to accused's photo"}
+        - {name: "YET_TO_BE_ARRESTED", type: "CHAR(1 CHAR)", nullable: true, description: "Is accused yet to be arrested (Y/N)"}
+        - {name: "ACCUSED_KNOWN", type: "CHAR(4 CHAR)", nullable: true, description: "Is accused known (Y/N)"}
+        - {name: "ACCUSED_SUSPECT", type: "CHAR(4 CHAR)", nullable: true, description: "Is accused a suspect (Y/N)"}
+        - {name: "ACCUSED_STATUS_CD", type: "NUMBER(10,0)", nullable: true, description: "Accused status code"}
+        - {name: "IS_JUVENILE", type: "CHAR(1 CHAR)", nullable: true, description: "Y or N (Age less than 18)"}
+        - {name: "CHRGSHT_OR_NOT", type: "CHAR(1 CHAR)", nullable: true, description: "Chargesheeted or not (Y/N)"} # Assuming CHARGESHEETED_OR_NOT
+        - {name: "ACC_KNOWN_CRIMINAL", type: "CHAR(1 CHAR)", nullable: true, description: "Is accused a known criminal (Y/N)"}
+        - {name: "RECORD_STATUS", type: "CHAR(1 CHAR)", nullable: true, description: "Record status"} # Type mismatch with JSON CHAR(1 CHAR) vs original CHAR(4 CHAR)
+        - {name: "INTERRO_SRNO", type: "NUMBER(24,0)", nullable: true, description: "Interrogation serial number"}
+        - {name: "IS_FROM_FIR", type: "CHAR(1 CHAR)", nullable: false, description: "Is this record from FIR (Y/N)"}
+        - {name: "ACCUSED_STATUS_UPDATED_DATE", type: "DATE", nullable: true, description: "Date accused status was updated"}
+        - {name: "ARREST_SURREND", type: "CHAR(1 CHAR)", nullable: true, description: "Arrested or surrendered (A/S)"} # Assuming ARREST_SURRENDER_FLAG
+        - {name: "ACCUSED_ALPHANUM", type: "VARCHAR2(40 CHAR)", nullable: true, description: "A1,A2,A3 .... (11,12,13.... IN CASE OF JUVENILE)"}
+        - {name: "PHOTO", type: "BLOB", nullable: true, description: "Photo of accused"}
+        - {name: "RECORD_CREATED_ON", type: "DATE", nullable: true, description: "Record created date"}
+        - {name: "RECORD_CREATED_BY", type: "VARCHAR2(500 BYTE)", nullable: true, description: "Record creator ID/Name"}
+        - {name: "RECORD_UPDATED_ON", type: "DATE", nullable: true, description: "Record updated date"}
+        - {name: "RECORD_UPDATED_BY", type: "VARCHAR2(500 BYTE)", nullable: true, description: "Record updater ID/Name"}
+        - {name: "RCN_NUM", type: "VARCHAR2(80 CHAR)", nullable: true, description: "RCN Number"}
+        - {name: "PCN_NUM", type: "VARCHAR2(80 CHAR)", nullable: true, description: "PCN Number"}
+        - {name: "MODULE", type: "NUMBER(15,0)", nullable: true, description: "Module code/ID"}
+        - {name: "ID_PROOF_NA", type: "VARCHAR2(20 BYTE)", nullable: true, description: "ID proof details"}
+        - {name: "IRAD_ACCONT_ID", type: "VARCHAR2(30 BYTE)", nullable: true, description: "IRAD Account ID"}
+        - {name: "IRAD_CONSUME_FLG", type: "VARCHAR2(4 BYTE)", nullable: true, description: "IRAD Consume Flag"}
+      primary_key: "ACCUSED_SRNO"
+      foreign_keys:
+        - {column: "FIR_REG_NUM", references: "T_FIR_REGISTRATION(FIR_REG_NUM)"}
+        - {column: "PERSON_CODE", references: "T_PERSON_INFO(PERSON_CODE)"}
+
+    # Master Tables from new schema
+    - name: "M_STATE"
+      type: "master"
+      description: "Master table for States."
+      columns:
+        - {name: "STATE_CD", type: "NUMBER(10,0)", nullable: false, description: "State Code (Primary Key)"}
+        - {name: "LANG_CD", type: "NUMBER(10,0)", nullable: false, description: "Language Code"}
+        - {name: "STATE", type: "VARCHAR2(100 CHAR)", nullable: true, description: "State Name"}
+        - {name: "OFFICIAL_LANG_CD", type: "NUMBER(10,0)", nullable: true, description: "Official Language Code of the State"}
+        - {name: "RECORD_STATUS", type: "CHAR(1 CHAR)", nullable: true, description: "Record Status (e.g., A for Active)"}
+        - {name: "LAST_UPDATED_ON", type: "DATE", nullable: false, description: "Last Updated Timestamp"}
+        - {name: "STATE_VEH_REG_CD", type: "VARCHAR2(2 BYTE)", nullable: true, description: "State Vehicle Registration Code (e.g., AP, TS)"}
+      primary_key: "STATE_CD"
+
+    - name: "M_DISTRICT"
+      type: "master"
+      description: "Master table for Districts."
+      columns:
+        - {name: "DISTRICT_CD", type: "NUMBER(10,0)", nullable: false, description: "District Code (Primary Key)"}
+        - {name: "LANG_CD", type: "NUMBER(10,0)", nullable: false, description: "Language Code"}
+        - {name: "STATE_CD", type: "NUMBER(10,0)", nullable: true, description: "State Code (Foreign Key to M_STATE)"}
+        - {name: "DISTRICT", type: "VARCHAR2(100 CHAR)", nullable: true, description: "District Name"}
+        - {name: "RECORD_STATUS", type: "CHAR(1 CHAR)", nullable: true, description: "Record Status"}
+        - {name: "LAST_UPDATED_ON", type: "DATE", nullable: false, description: "Last Updated Timestamp"}
+        - {name: "DIST_SHORT_FORM", type: "VARCHAR2(200 BYTE)", nullable: true, description: "District Short Form/Abbreviation"}
+        - {name: "SEB_FLAG", type: "NUMBER(10,0)", nullable: true, description: "Special Enforcement Bureau Flag"}
+      primary_key: "DISTRICT_CD"
+      foreign_keys:
+        - {column: "STATE_CD", references: "M_STATE(STATE_CD)"}
+
+    - name: "M_POLICE_UNITS" # Formerly M_POLICE_STATION in some contexts
+      type: "master"
+      description: "Master table for Police Units (Stations, Circles, etc.)."
+      columns:
+        - {name: "UNIT_CO", type: "NUMBER(10,0)", nullable: false, description: "Unit Code (Primary Key)"} # Changed nullable based on PK
+        - {name: "LANG_CO", type: "NUMBER(10,0)", nullable: true, description: "Language Code"}
+        - {name: "STATE_CO", type: "NUMBER(10,0)", nullable: true, description: "State Code (FK)"}
+        - {name: "DISTRICT_CO", type: "NUMBER(10,0)", nullable: true, description: "District Code (FK)"}
+        - {name: "UNIT_NAME", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Police Unit Name"}
+        - {name: "UNIT_TYPE_CO", type: "NUMBER(10,0)", nullable: true, description: "Unit Type Code (e.g., PS, Circle Office)"}
+        - {name: "REPORTING_UNIT_CO", type: "NUMBER", nullable: true, description: "Reporting Unit Code (Parent Unit)"}
+        - {name: "RECORD_STATUS", type: "CHAR(1 CHAR)", nullable: true, description: "Record Status"}
+        - {name: "LAST_UPDATED_ON", type: "DATE", nullable: true, description: "Last Updated Timestamp"}
+        - {name: "LATITUDE", type: "VARCHAR2(100 BYTE)", nullable: true, description: "Latitude"}
+        - {name: "LONGITUDE", type: "VARCHAR2(100 BYTE)", nullable: true, description: "Longitude"}
+        - {name: "LOCALITY", type: "VARCHAR2(80 BYTE)", nullable: true, description: "Locality"}
+        - {name: "STREET_ROAD_NO", type: "VARCHAR2(100 BYTE)", nullable: true, description: "Street/Road Number"}
+        - {name: "LANDMARK_MILESTONE", type: "VARCHAR2(200 BYTE)", nullable: true, description: "Landmark"}
+        - {name: "PINCODE", type: "NUMBER(10,0)", nullable: true, description: "Pincode"}
+        - {name: "COUNTRY_CODE", type: "NUMBER(10,0)", nullable: true, description: "Country Code"}
+        - {name: "LAND_LINE2", type: "NUMBER(15,0)", nullable: true, description: "Landline Number 2"}
+        - {name: "LAND_LINE3", type: "NUMBER(15,0)", nullable: true, description: "Landline Number 3"}
+        - {name: "FAX_NO", type: "VARCHAR2(100 BYTE)", nullable: true, description: "Fax Number"}
+        - {name: "LAND_LINE1", type: "NUMBER(15,0)", nullable: true, description: "Landline Number 1"}
+        - {name: "UNIT_SHORT_FORM", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Unit Short Form"}
+      primary_key: "UNIT_CO" # UNIT_CO should be PK
+      foreign_keys:
+        - {column: "STATE_CO", references: "M_STATE(STATE_CD)"}
+        - {column: "DISTRICT_CO", references: "M_DISTRICT(DISTRICT_CD)"}
+
+    - name: "M_CRIME_CLASS"
+      type: "master"
+      description: "Master table for Crime Classifications."
+      columns:
+        - {name: "CRIME_CLASS_CD", type: "NUMBER(10,0)", nullable: false, description: "Crime Class Code (Primary Key)"}
+        - {name: "LANG_CD", type: "NUMBER(10,0)", nullable: false, description: "Language Code"}
+        - {name: "CRIME_CLASS", type: "VARCHAR2(150 BYTE)", nullable: true, description: "Crime Class Description"}
+        - {name: "RECORD_STATUS", type: "CHAR(1 BYTE)", nullable: false, description: "Record Status"}
+        - {name: "LAST_UPDATED_ON", type: "DATE", nullable: false, description: "Last Updated Timestamp"}
+      primary_key: "CRIME_CLASS_CD"
+
+    - name: "M_MASTER_DATA"
+      type: "master"
+      description: "Generic master table for various lookup codes and values (e.g., FIR Status, Grave Types)."
+      columns:
+        - {name: "MASTER_CD", type: "NUMBER(15,0)", nullable: false, description: "Master Code (Primary Key)"} # Changed nullable based on PK
+        - {name: "MASTER_TYPE_CD", type: "NUMBER(10,0)", nullable: true, description: "Type of Master Data (e.g., 121 for FIR_STATUS, 139 for GRAVE_TYPE_CO)"}
+        - {name: "MASTER_PARENT_CD", type: "NUMBER(10,0)", nullable: true, description: "Parent code if hierarchical"}
+        - {name: "LANG_CD", type: "NUMBER(10,0)", nullable: true, description: "Language Code"}
+        - {name: "MASTER_VALUE", type: "VARCHAR2(320 BYTE)", nullable: true, description: "Actual value/description of the master code"}
+        - {name: "IS_ACTIVE", type: "CHAR(1 BYTE)", nullable: true, description: "Is this master value active (Y/N)"}
+        - {name: "CAS_MASTER_CD", type: "NUMBER(10,0)", nullable: true, description: "CAS Master Code"}
+        - {name: "RECORD_STATUS", type: "CHAR(1 BYTE)", nullable: false, description: "Record Status"}
+        - {name: "LAST_UPDATED_ON", type: "DATE", nullable: false, description: "Last Updated Timestamp"}
+      primary_key: "MASTER_CD" # MASTER_CD should be PK
+
+    - name: "M_MAJOR_HEAD"
+      type: "master"
+      description: "Master table for Major Crime Heads."
+      columns:
+        - {name: "MAJOR_HEAD_CODE", type: "NUMBER(10,0)", nullable: false, description: "Major Head Code (Primary Key)"}
+        - {name: "LANG_CD", type: "NUMBER(10,0)", nullable: false, description: "Language Code"}
+        - {name: "MAJOR_HEAD", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Major Head Description"}
+        - {name: "RECORD_STATUS", type: "CHAR(1 CHAR)", nullable: true, description: "Record Status"}
+        - {name: "LAST_UPDATED_ON", type: "DATE", nullable: false, description: "Last Updated Timestamp"}
+      primary_key: "MAJOR_HEAD_CODE"
+
+    - name: "M_MINOR_HEAD"
+      type: "master"
+      description: "Master table for Minor Crime Heads, linked to Major Heads."
+      columns:
+        - {name: "MINOR_HEAD_CD", type: "NUMBER(10,0)", nullable: false, description: "Minor Head Code (Primary Key)"}
+        - {name: "LANG_CD", type: "NUMBER(10,0)", nullable: false, description: "Language Code"}
+        - {name: "MAJOR_HEAD_CODE", type: "NUMBER(10,0)", nullable: true, description: "Major Head Code (Foreign Key to M_MAJOR_HEAD)"}
+        - {name: "MINOR_HEAD", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Minor Head Description"}
+        - {name: "RECORD_STATUS", type: "CHAR(1 CHAR)", nullable: true, description: "Record Status"}
+        - {name: "LAST_UPDATED_ON", type: "DATE", nullable: false, description: "Last Updated Timestamp"}
+      primary_key: "MINOR_HEAD_CD"
+      foreign_keys:
+        - {column: "MAJOR_HEAD_CODE", references: "M_MAJOR_HEAD(MAJOR_HEAD_CODE)"}
+
+    - name: "M_PERSON_TYPES"
+      type: "master"
+      description: "Master table for types of persons (e.g., Complainant, Accused, Victim)."
+      columns:
+        - {name: "PERSON_TYPE_CO", type: "NUMBER(10,0)", nullable: false, description: "Person Type Code (Primary Key)"} # Renamed from PERSON_TYPE_CD for consistency
+        - {name: "LANG_CO", type: "NUMBER(10,0)", nullable: false, description: "Language Code"}
+        - {name: "PERSON_TYPE", type: "VARCHAR2(100 CHAR)", nullable: false, description: "Description of Person Type"}
+        - {name: "RECORD_STATUS", type: "CHAR(1 CHAR)", nullable: true, description: "Record Status"}
+        - {name: "LAST_UPDATED_ON", type: "DATE", nullable: false, description: "Last Updated Timestamp"}
+        - {name: "IS_REQ_FOR_CIS", type: "NUMBER(1,0)", nullable: true, description: "Is required for CIS (Y/N flag as number)"}
+      primary_key: "PERSON_TYPE_CO"
+
+    - name: "M_ACT"
+      type: "master"
+      description: "Master table for Acts (e.g., IPC, CrPC)."
+      columns:
+        - {name: "ACT_CO", type: "NUMBER(10,0)", nullable: false, description: "Act Code (Primary Key)"} # Renamed from ACT_CD for consistency
+        - {name: "LANG_CO", type: "NUMBER(10,0)", nullable: false, description: "Language Code"}
+        - {name: "ACT_LONG", type: "VARCHAR2(100 CHAR)", nullable: true, description: "Full Name of the Act"}
+        - {name: "ACT_SHORT", type: "VARCHAR2(200 CHAR)", nullable: true, description: "Short Name/Abbreviation of the Act"}
+        - {name: "RECORD_STATUS", type: "CHAR(1 CHAR)", nullable: true, description: "Record Status"}
+        - {name: "LAST_UPDATED_ON", type: "DATE", nullable: false, description: "Last Updated Timestamp"}
+        - {name: "DISPLAY_SEQ", type: "NUMBER(10,0)", nullable: true, description: "Display Sequence"}
+        - {name: "AMENDMENT_YEAR", type: "NUMBER(4,0)", nullable: true, description: "Year of Amendment"}
+        - {name: "INGREDIENTS", type: "VARCHAR2(100 BYTE)", nullable: true, description: "Key ingredients of the act"}
+        - {name: "SUPREM_COURT_ORDER_DTLS", type: "VARCHAR2(100 BYTE)", nullable: true, description: "Supreme Court order details"}
+        - {name: "JUDGMENT", type: "VARCHAR2(100 BYTE)", nullable: true, description: "Relevant judgment details"}
+        - {name: "ICIS_NAT_CO", type: "NUMBER(38,0)", nullable: true, description: "ICJS National Code"} # Assuming ICJS
+      primary_key: "ACT_CO"
+
+    - name: "M_SECTION"
+      type: "master"
+      description: "Master table for Sections under various Acts."
+      columns:
+        - {name: "SECTION_CO", type: "NUMBER(10,0)", nullable: false, description: "Section Code (Primary Key)"} # Renamed from SECTION_CD for consistency
+        - {name: "LANG_CO", type: "NUMBER(10,0)", nullable: false, description: "Language Code"}
+        - {name: "SECTION_CODE", type: "VARCHAR2(200 CHAR)", nullable: false, description: "Section Number/Code (e.g., 302, 379)"}
+        - {name: "ACT_SEC_CO", type: "NUMBER(10,0)", nullable: true, description: "Act Code (Foreign Key to M_ACT)"} # Should be ACT_CO
+        - {name: "SECTION", type: "VARCHAR2(400 CHAR)", nullable: true, description: "Section Title/Short Description"}
+        - {name: "SHORT_DESC", type: "VARCHAR2(50 CHAR)", nullable: true, description: "Very short description"}
+        - {name: "DESCRIPTION", type: "CLOB", nullable: false, description: "Full description of the section"}
+        - {name: "OFFENCE", type: "VARCHAR2(400 CHAR)", nullable: true, description: "Nature of Offence"}
+        - {name: "PUNISHMENT", type: "VARCHAR2(400 CHAR)", nullable: true, description: "Punishment details"}
+        - {name: "ISVALID", type: "CHAR(1 CHAR)", nullable: false, description: "Is the section valid (Y/N)"}
+        - {name: "ISPUNISHABLE", type: "CHAR(1 CHAR)", nullable: true, description: "Is it a punishable offense (Y/N)"}
+        - {name: "ISBAILABLE", type: "CHAR(1 CHAR)", nullable: true, description: "Is the offense bailable (Y/N)"}
+        - {name: "ISOAGNIZABLE", type: "CHAR(1 CHAR)", nullable: true, description: "Is it a cognizable offense (Y/N)"} # Assuming ISCOGNIZABLE
+        - {name: "ISGRAVE", type: "CHAR(1 CHAR)", nullable: true, description: "Is it a grave offense (Y/N)"}
+        - {name: "AMEND_YEAR", type: "NUMBER(4,0)", nullable: true, description: "Year of Amendment"}
+        - {name: "RECORD_STATUS", type: "VARCHAR2(1 CHAR)", nullable: false, description: "Record Status"}
+        - {name: "LAST_UPDATED_ON", type: "DATE", nullable: true, description: "Last Updated Timestamp"}
+        - {name: "PNSH_GT_YYRS", type: "VARCHAR2(1 BYTE)", nullable: true, description: "Punishment greater than 7 years (Y/N)"} # Assuming PNSH_GT_7YRS
+      primary_key: "SECTION_CO"
+      foreign_keys:
+        - {column: "ACT_SEC_CO", references: "M_ACT(ACT_CO)"} # Corrected FK reference
 
 # Police Terminology and Corrections
 police_terminology:
