@@ -1,0 +1,571 @@
+# CCTNS Copilot Engine - AI Models Configuration
+# This file contains configuration for all AI/ML models used in the system
+# Both .yaml and .yml extensions are supported (identical content)
+
+# Model Cache and Storage Configuration
+model_storage:
+  cache_dir: "./models_cache"
+  max_cache_size_gb: 50
+  auto_cleanup: true
+  cleanup_threshold_days: 30
+  download_timeout_minutes: 30
+  verify_checksums: true
+
+# Hardware Configuration
+hardware:
+  use_gpu: true
+  gpu_memory_fraction: 0.8
+  cpu_cores: -1  # Use all available cores (-1) or specify number
+  mixed_precision: true
+  batch_size_auto_adjust: true
+  memory_optimization: true
+
+# Speech-to-Text Models Configuration
+speech_to_text:
+  primary:
+    name: "ai4bharat/indicconformer"
+    model_type: "wav2vec2"
+    language_support: ["te", "hi", "en-IN"]
+    confidence_threshold: 0.7
+    device: "auto"  # auto-detect GPU/CPU
+    batch_size: 1
+    sample_rate: 16000
+    max_audio_length: 300  # seconds
+    chunk_length_s: 30
+    stride_length_s: 5
+    preprocessing:
+      normalize_audio: true
+      remove_silence: true
+      noise_reduction: true
+      volume_normalization: true
+      apply_vad: true  # Voice Activity Detection
+    postprocessing:
+      apply_punctuation: true
+      capitalize_sentences: true
+      remove_disfluencies: true
+    
+  fallback:
+    name: "openai/whisper-medium"
+    model_type: "whisper"
+    language_support: ["te", "hi", "en", "auto"]
+    confidence_threshold: 0.6
+    device: "auto"
+    temperature: 0.0
+    beam_size: 5
+    best_of: 5
+    patience: 1.0
+    length_penalty: 1.0
+    suppress_tokens: "-1"
+    initial_prompt: null
+    condition_on_previous_text: true
+    fp16: true
+    compression_ratio_threshold: 2.4
+    logprob_threshold: -1.0
+    no_speech_threshold: 0.6
+    
+  # Language-specific model configurations
+  language_models:
+    telugu:
+      primary: "ai4bharat/indicconformer_te"
+      fallback: "openai/whisper-medium"
+      pronunciation_dict: "data/telugu_pronunciation.json"
+      custom_vocabulary: "data/telugu_police_terms.txt"
+    hindi:
+      primary: "ai4bharat/indicconformer_hi" 
+      fallback: "openai/whisper-medium"
+      pronunciation_dict: "data/hindi_pronunciation.json"
+      custom_vocabulary: "data/hindi_police_terms.txt"
+    english:
+      primary: "openai/whisper-medium"
+      fallback: "wav2vec2-base-960h"
+      pronunciation_dict: "data/english_pronunciation.json"
+      custom_vocabulary: "data/english_police_terms.txt"
+
+# Text Processing Models Configuration
+text_processing:
+  grammar_correction:
+    name: "google/flan-t5-base"
+    temperature: 0.3
+    max_length: 200
+    min_length: 10
+    num_beams: 4
+    early_stopping: true
+    repetition_penalty: 1.2
+    length_penalty: 1.0
+    no_repeat_ngram_size: 3
+    
+  enhancement:
+    name: "microsoft/DialoGPT-medium"
+    temperature: 0.1
+    max_length: 100
+    top_p: 0.9
+    top_k: 50
+    repetition_penalty: 1.1
+    pad_token_id: 50256
+    eos_token_id: 50256
+    
+  language_detection:
+    name: "facebook/fasttext-langdetect"
+    confidence_threshold: 0.8
+    supported_languages: ["te", "hi", "en"]
+    fallback_language: "en"
+    
+  translation:
+    english_to_telugu:
+      name: "ai4bharat/indictrans2-en-indic"
+      beam_size: 4
+      temperature: 0.0
+      max_length: 256
+      src_lang: "eng_Latn"
+      tgt_lang: "tel_Telu"
+    telugu_to_english:
+      name: "ai4bharat/indictrans2-indic-en"
+      beam_size: 4
+      temperature: 0.0
+      max_length: 256
+      src_lang: "tel_Telu"
+      tgt_lang: "eng_Latn"
+    hindi_to_english:
+      name: "ai4bharat/indictrans2-indic-en"
+      beam_size: 4
+      temperature: 0.0
+      max_length: 256
+      src_lang: "hin_Deva"
+      tgt_lang: "eng_Latn"
+    english_to_hindi:
+      name: "ai4bharat/indictrans2-en-indic"
+      beam_size: 4
+      temperature: 0.0
+      max_length: 256
+      src_lang: "eng_Latn"
+      tgt_lang: "hin_Deva"
+
+# Natural Language to SQL Models Configuration
+nl2sql:
+  primary:
+    name: "microsoft/CodeT5-base"
+    model_type: "code_generation"
+    temperature: 0.1
+    max_length: 300
+    min_length: 20
+    beam_size: 5
+    early_stopping: true
+    num_return_sequences: 3
+    length_penalty: 1.0
+    no_repeat_ngram_size: 2
+    
+  fallback:
+    name: "rule_based"
+    confidence_threshold: 0.8
+    template_matching: true
+    keyword_extraction: true
+    entity_recognition: true
+    
+  preprocessing:
+    normalize_entities: true
+    expand_abbreviations: true
+    correct_spelling: true
+    standardize_dates: true
+    resolve_pronouns: true
+    
+  postprocessing:
+    validate_syntax: true
+    sanitize_queries: true
+    add_limits: true
+    max_result_rows: 1000
+    security_check: true
+    optimize_queries: true
+
+# Text Summarization Models Configuration
+summarization:
+  report_summary:
+    name: "google/pegasus-cnn_dailymail"
+    max_length: 150
+    min_length: 30
+    num_beams: 4
+    temperature: 0.7
+    length_penalty: 2.0
+    early_stopping: true
+    no_repeat_ngram_size: 3
+    
+  query_summary:
+    name: "facebook/bart-large-cnn"
+    max_length: 100
+    min_length: 20
+    num_beams: 3
+    temperature: 0.5
+    length_penalty: 1.5
+    
+  conversation_summary:
+    name: "microsoft/DialoGPT-medium"
+    max_length: 80
+    min_length: 15
+    temperature: 0.3
+
+# Named Entity Recognition Configuration
+ner:
+  police_entities:
+    name: "custom/police-ner-model"
+    entities: ["PERSON", "LOCATION", "CRIME_TYPE", "DATE", "STATION", "DISTRICT", "OFFICER_RANK", "VEHICLE", "PHONE"]
+    confidence_threshold: 0.8
+    max_length: 512
+    
+  general_entities:
+    name: "dbmdz/bert-large-cased-finetuned-conll03-english"
+    entities: ["PER", "LOC", "ORG", "MISC"]
+    confidence_threshold: 0.7
+    
+  multilingual_entities:
+    name: "xlm-roberta-large-finetuned-conll03-english"
+    entities: ["PER", "LOC", "ORG", "MISC"]
+    languages: ["en", "hi", "te"]
+
+# Embeddings and Similarity Configuration
+embeddings:
+  sentence_embeddings:
+    name: "sentence-transformers/all-MiniLM-L6-v2"
+    dimension: 384
+    normalize_embeddings: true
+    
+  query_similarity:
+    name: "sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
+    threshold: 0.7
+    top_k: 5
+    
+  multilingual_embeddings:
+    name: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    dimension: 384
+    languages: ["en", "hi", "te"]
+
+# Intent Classification Configuration
+intent_classification:
+  model_name: "facebook/bart-large-mnli"
+  confidence_threshold: 0.8
+  intents:
+    - "query_data"
+    - "generate_report"
+    - "get_statistics"
+    - "search_records"
+    - "compare_data"
+    - "trend_analysis"
+    - "help_request"
+    - "greeting"
+    - "goodbye"
+
+# CCTNS Database Schema Configuration
+cctns_schema:
+  database_type: "oracle"
+  schema_version: "2.0"
+  
+  # Master Tables Configuration
+  tables:
+    - name: "DISTRICT_MASTER"
+      type: "master"
+      columns: ["district_id", "district_code", "district_name", "state_code", "created_date", "updated_date", "status"]
+      primary_key: "district_id"
+      description: "District master data for administrative divisions"
+      indexes: ["district_code", "district_name"]
+      
+    - name: "STATION_MASTER"
+      type: "master"
+      columns: ["station_id", "station_name", "station_code", "district_id", "latitude", "longitude", "contact_number", "officer_in_charge"]
+      primary_key: "station_id"
+      foreign_keys: 
+        - column: "district_id"
+          references: "DISTRICT_MASTER.district_id"
+      description: "Police station master data"
+      indexes: ["station_code", "district_id"]
+      
+    - name: "OFFICER_MASTER"
+      type: "master"
+      columns: ["officer_id", "officer_name", "rank", "badge_number", "station_id", "mobile_number", "email", "joining_date", "status"]
+      primary_key: "officer_id"
+      foreign_keys:
+        - column: "station_id"
+          references: "STATION_MASTER.station_id"
+      description: "Police officer master data"
+      indexes: ["badge_number", "station_id", "rank"]
+      
+    - name: "CRIME_TYPE_MASTER"
+      type: "master"
+      columns: ["crime_type_id", "crime_code", "crime_description", "ipc_section", "severity_level", "category", "sub_category"]
+      primary_key: "crime_type_id"
+      description: "Crime type classifications and IPC sections"
+      indexes: ["crime_code", "category", "severity_level"]
+      
+    # Transaction Tables Configuration
+    - name: "FIR"
+      type: "transaction"
+      columns: ["fir_id", "fir_number", "district_id", "station_id", "crime_type_id", "incident_date", "report_date", "status", "complainant_name", "complainant_mobile", "incident_location", "description", "investigating_officer_id"]
+      primary_key: "fir_id"
+      foreign_keys:
+        - column: "district_id"
+          references: "DISTRICT_MASTER.district_id"
+        - column: "station_id"
+          references: "STATION_MASTER.station_id"
+        - column: "crime_type_id"
+          references: "CRIME_TYPE_MASTER.crime_type_id"
+        - column: "investigating_officer_id"
+          references: "OFFICER_MASTER.officer_id"
+      description: "First Information Report records"
+      indexes: ["fir_number", "incident_date", "status", "district_id", "station_id"]
+      
+    - name: "ARREST"
+      type: "transaction"
+      columns: ["arrest_id", "fir_id", "officer_id", "arrested_person_name", "arrested_person_age", "arrested_person_address", "arrest_date", "arrest_location", "arrest_reason", "bail_status"]
+      primary_key: "arrest_id"
+      foreign_keys:
+        - column: "fir_id"
+          references: "FIR.fir_id"
+        - column: "officer_id"
+          references: "OFFICER_MASTER.officer_id"
+      description: "Arrest records linked to FIRs"
+      indexes: ["fir_id", "officer_id", "arrest_date"]
+      
+    - name: "INVESTIGATION"
+      type: "transaction"
+      columns: ["investigation_id", "fir_id", "officer_id", "investigation_date", "status", "notes", "evidence_collected", "next_action"]
+      primary_key: "investigation_id"
+      foreign_keys:
+        - column: "fir_id"
+          references: "FIR.fir_id"
+        - column: "officer_id"
+          references: "OFFICER_MASTER.officer_id"
+      description: "Investigation progress tracking"
+      indexes: ["fir_id", "officer_id", "status"]
+
+# Police Terminology and Corrections Configuration
+police_terminology:
+  abbreviations:
+    "fir": "FIR"
+    "sho": "SHO"
+    "asi": "ASI"
+    "si": "SI"
+    "ci": "CI"
+    "sp": "SP"
+    "ig": "IG"
+    "dgp": "DGP"
+    "ips": "IPS"
+    "cid": "CID"
+    "sob": "SOB"
+    "pcr": "PCR"
+    "cctv": "CCTV"
+    
+  corrections:
+    "station house officer": "SHO"
+    "assistant sub inspector": "ASI"
+    "sub inspector": "SI"
+    "circle inspector": "CI"
+    "superintendent of police": "SP"
+    "inspector general": "IG"
+    "director general of police": "DGP"
+    "indian police service": "IPS"
+    "crime investigation department": "CID"
+    "special operations branch": "SOB"
+    "police control room": "PCR"
+    "closed circuit television": "CCTV"
+    
+  ranks:
+    hierarchy:
+      - "Constable"
+      - "Head Constable"
+      - "ASI"
+      - "SI"
+      - "CI"
+      - "DSP"
+      - "Additional SP"
+      - "SP"
+      - "DIG"
+      - "IG"
+      - "ADGP"
+      - "DGP"
+    
+  districts:
+    andhra_pradesh:
+      - "Guntur"
+      - "Vijayawada"
+      - "Visakhapatnam"
+      - "Tirupati"
+      - "Kurnool"
+      - "Nellore"
+      - "Kadapa"
+      - "Chittoor"
+      - "Krishna"
+      - "West Godavari"
+      - "East Godavari"
+      - "Srikakulam"
+      - "Vizianagaram"
+      - "Anantapur"
+      - "Prakasam"
+      
+  crime_types:
+    major_crimes:
+      - "Murder"
+      - "Attempt to Murder"
+      - "Rape"
+      - "Kidnapping"
+      - "Dacoity"
+      - "Robbery"
+      - "Burglary"
+      - "Theft"
+      - "Criminal Breach of Trust"
+      - "Cheating"
+      - "Counterfeiting"
+      - "Arson"
+    
+    special_crimes:
+      - "Cybercrime"
+      - "Economic Offences"
+      - "Narcotic Drugs"
+      - "Arms Act"
+      - "Dowry Death"
+      - "Domestic Violence"
+      - "Human Trafficking"
+      - "POCSO"
+      - "SC/ST Atrocities"
+      - "Corruption"
+    
+    traffic_violations:
+      - "Rash Driving"
+      - "Drunk Driving"
+      - "Over Speeding"
+      - "Signal Jumping"
+      - "No Helmet"
+      - "Triple Riding"
+      - "Wrong Side Driving"
+      - "Hit and Run"
+
+# Query Processing Configuration
+query_processing:
+  max_query_length: 500
+  timeout_seconds: 30
+  max_results: 1000
+  enable_query_caching: true
+  cache_ttl_minutes: 60
+  
+  # Query validation rules
+  allowed_operations: ["SELECT"]
+  blocked_keywords: ["DROP", "DELETE", "UPDATE", "INSERT", "TRUNCATE", "ALTER", "CREATE", "EXEC", "EXECUTE"]
+  
+  # Query optimization
+  auto_add_limits: true
+  default_limit: 100
+  max_limit: 1000
+  
+  # Result formatting
+  date_format: "DD-MM-YYYY"
+  datetime_format: "DD-MM-YYYY HH24:MI:SS"
+  number_format: "indian"
+  include_metadata: true
+  
+  # Security settings
+  enable_sql_injection_detection: true
+  sanitize_input: true
+  validate_table_access: true
+
+# Logging Configuration for Models
+logging:
+  model_performance: true
+  query_logging: true
+  error_tracking: true
+  metrics_collection: true
+  detailed_traces: false
+  
+  log_levels:
+    speech_to_text: "INFO"
+    nl2sql: "DEBUG"
+    text_processing: "INFO"
+    database: "INFO"
+    api: "INFO"
+    agents: "INFO"
+    
+  log_rotation:
+    max_file_size: "100MB"
+    backup_count: 5
+    
+  metrics_export:
+    prometheus_enabled: true
+    export_interval_seconds: 60
+
+# Performance Monitoring Configuration
+performance:
+  enable_metrics: true
+  metrics_endpoint: "/metrics"
+  health_check_endpoint: "/health"
+  
+  # Performance thresholds (in milliseconds)
+  thresholds:
+    stt_response_time_ms: 5000
+    sql_generation_time_ms: 2000
+    query_execution_time_ms: 10000
+    total_response_time_ms: 15000
+    model_loading_time_ms: 30000
+  
+  # Alerts configuration
+  alerts:
+    enable_alerts: true
+    alert_endpoints: []
+    error_threshold_percent: 5
+    response_time_threshold_ms: 20000
+    
+  # Resource monitoring
+  resource_monitoring:
+    cpu_threshold_percent: 80
+    memory_threshold_percent: 85
+    gpu_memory_threshold_percent: 90
+    disk_space_threshold_percent: 90
+
+# Development and Testing Configuration
+development:
+  mock_models: false
+  enable_debug_mode: false
+  model_download_on_startup: true
+  validate_models_on_startup: true
+  
+  # Testing configurations
+  test_data_path: "data/test"
+  benchmark_datasets: "data/benchmarks"
+  
+  # Model validation
+  validation:
+    speech_to_text:
+      test_audio_files: ["data/test/audio/test_te.wav", "data/test/audio/test_hi.wav", "data/test/audio/test_en.wav"]
+      expected_accuracy: 0.85
+    
+    nl2sql:
+      test_queries: "data/test/nl2sql_test_cases.json"
+      expected_accuracy: 0.80
+    
+    text_processing:
+      test_texts: "data/test/text_processing_test.json"
+      expected_accuracy: 0.75
+
+# Model Update and Versioning
+model_updates:
+  auto_update: false
+  update_check_interval_hours: 24
+  backup_before_update: true
+  rollback_on_failure: true
+  
+  versioning:
+    track_model_versions: true
+    max_versions_to_keep: 3
+    version_comparison_enabled: true
+
+# Security Configuration
+security:
+  model_encryption: false
+  secure_model_storage: true
+  validate_model_signatures: true
+  
+  # Access control
+  model_access_control:
+    require_authentication: true
+    allowed_users: []
+    admin_users: []
+    
+  # Data privacy
+  privacy:
+    anonymize_logs: true
+    encrypt_sensitive_data: true
+    data_retention_days: 90

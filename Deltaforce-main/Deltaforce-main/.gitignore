@@ -1,0 +1,447 @@
+# CCTNS Copilot Engine - Git Ignore File
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+.conda/
+
+# Environment Variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+
+# IDE and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+
+# Models and Caches
+models_cache/
+huggingface_cache/
+transformers_cache/
+whisper_cache/
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.onnx
+
+# Audio/Video files (temporary uploads)
+temp/
+uploads/
+audio_uploads/
+*.wav
+*.mp3
+*.mp4
+*.avi
+*.mov
+*.webm
+*.ogg
+*.flac
+*.m4a
+
+# Reports and Exports
+reports/
+exports/
+generated_reports/
+*.pdf
+*.docx
+*.xlsx
+*.csv
+*.json.gz
+
+# Logs
+logs/
+*.log
+*.log.*
+*.out
+application.log
+error.log
+access.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+database.db
+test.db
+
+# Oracle specific
+*.ora
+tnsnames.ora
+sqlnet.ora
+oracle_wallet/
+*.wallet
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+notebook_outputs/
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+test_results/
+test_outputs/
+
+# Documentation
+docs/_build/
+site/
+_site/
+.jekyll-cache/
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Mobile Development
+# Flutter
+mobile/flutter/.dart_tool/
+mobile/flutter/.packages
+mobile/flutter/.pub-cache/
+mobile/flutter/.pub/
+mobile/flutter/build/
+mobile/flutter/.flutter-plugins
+mobile/flutter/.flutter-plugins-dependencies
+mobile/flutter/ios/Pods/
+mobile/flutter/ios/Runner.xcworkspace/
+mobile/flutter/android/.gradle/
+mobile/flutter/android/app/build/
+
+# React Native
+mobile/react-native/node_modules/
+mobile/react-native/.expo/
+mobile/react-native/dist/
+mobile/react-native/.expo-shared/
+mobile/react-native/.metro-health-check*
+mobile/react-native/ios/Pods/
+mobile/react-native/android/.gradle/
+mobile/react-native/android/app/build/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Sensitive Data & Credentials
+*.key
+*.pem
+*.crt
+*.csr
+*.p12
+*.pfx
+credentials.json
+secrets/
+config/local_*
+config/production_*
+.secrets/
+private_keys/
+
+# API Keys and Tokens (extra safety)
+*api_key*
+*secret*
+*token*
+*password*
+*credentials*
+*_key.json
+*_secret.json
+
+# AI Model Downloads
+downloaded_models/
+pretrained_models/
+model_weights/
+checkpoints/
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# Large Files
+*.iso
+*.dmg
+*.gz
+*.bz2
+*.xz
+
+# Backup Files
+*.bak
+*.backup
+*.old
+*.orig
+*.tmp
+*~
+*.swp
+*.swo
+
+# Local Configuration
+config/local.py
+config/local.yaml
+local_settings.py
+settings_local.py
+
+# Generated Files
+generated/
+auto_generated/
+synthetic_data/
+mock_data/
+sample_outputs/
+
+# Performance Profiling
+.prof
+*.prof
+profile_*.txt
+
+# Temporary Files
+tmp/
+temp/
+.tmp/
+.temp/
+temporary/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+.docker/
+
+# Kubernetes
+k8s-secrets/
+*.kubeconfig
+secrets.yaml
+
+# Cloud Deployment
+.terraform/
+*.tfstate
+*.tfstate.backup
+.aws/
+.gcp/
+.azure/
+
+# Web Assets (if auto-generated)
+web/static/generated/
+web/dist/
+web/build/
+
+# Speech Recognition Temporary Files
+speech_temp/
+audio_processing/
+voice_temp/
+
+# CCTNS Specific
+oracle_backup/
+db_backup/
+police_data/
+sensitive_queries/
+production_data/
+real_data/
+cctns_backup/
+
+# Demo and Testing Data
+demo_audio/
+test_audio/
+sample_voices/
+mock_database/
+
+# Development Tools
+.mypy_cache/
+.pytype/
+.pyre/
+.pylint.d/
+
+# FastAPI specific
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Streamlit
+.streamlit/
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Weights & Biases
+wandb/
+
+# DVC (Data Version Control)
+.dvc/
+*.dvc
+
+# Experimental
+experiments/
+research/
+prototypes/
+
+# Language Model Outputs
+generated_text/
+model_outputs/
+inference_results/
+
+# Audio Processing
+audio_cache/
+processed_audio/
+audio_features/
+
+# Chart and Visualization Outputs
+charts/
+plots/
+visualizations/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+
+# Synthetic Data Generation
+synthetic/
+fake_data/
+generated_samples/
+
+# Performance Monitoring
+monitoring/
+metrics/
+performance_logs/
+
+# Backup Directories
+backup/
+backups/
+archive/
+
+# IDE Project Files
+.project
+.pydevproject
+.settings/
+.vscode/settings.json
+.vscode/launch.json
+
+# macOS
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Linux
+*~
+
+# Custom Exclusions for Hackathon
+hackathon_data/
+submission/
+presentation/
+*.pptx
+*.ppt
+
+# Redis
+dump.rdb
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+
+# Translations
+*.mo
+*.pot
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# conda
+.conda/
+
+# PEP 582
+__pypackages__/
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/

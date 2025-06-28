@@ -1,0 +1,70 @@
+# Core Framework
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.5.0
+sqlalchemy>=2.0.0
+alembic>=1.13.0
+
+# Speech-to-Text Models
+torch>=2.1.0
+torchaudio>=2.1.0
+transformers>=4.35.0
+librosa>=0.10.1
+speechbrain>=0.5.15
+openai-whisper>=20231117
+datasets>=2.14.0
+sentencepiece>=0.1.99
+
+# Text Processing
+sentence-transformers>=2.2.2
+spacy>=3.7.0
+nltk>=3.8.1
+
+# SQL Processing
+sqlparse>=0.4.4
+langchain>=0.1.0
+langchain-experimental>=0.0.50
+
+# Report Generation  
+matplotlib>=3.8.0
+plotly>=5.17.0
+seaborn>=0.13.0
+jinja2>=3.1.2
+weasyprint>=60.0
+python-docx>=1.1.0
+pdfkit>=1.0.0
+
+# Database Drivers
+cx-oracle>=8.3.0
+psycopg2-binary>=2.9.7
+pymongo>=4.6.0
+
+# Web Framework
+flask>=3.0.0
+flask-cors>=4.0.0
+websockets>=12.0
+
+# Audio Processing
+soundfile>=0.12.1
+scipy>=1.11.0
+
+# Utilities
+python-dotenv>=1.0.0
+pyyaml>=6.0.1
+python-multipart>=0.0.6
+aiofiles>=23.2.1
+httpx>=0.25.0
+redis>=5.0.0
+
+# Development
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+black>=23.10.0
+flake8>=6.1.0
+mypy>=1.7.0
+
+# Security
+python-jose>=3.3.0
+passlib>=1.7.4
+bcrypt>=4.1.0
+cryptography>=41.0.0

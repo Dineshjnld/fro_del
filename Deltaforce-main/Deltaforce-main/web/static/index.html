@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CCTNS Copilot Engine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-panel {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 600px;
+        }
+
+        .query-panel {
+            padding: 30px;
+            border-right: 1px solid #eee;
+        }
+
+        .results-panel {
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #4a5568;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .input-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .query-input {
+            width: 100%;
+            padding: 15px 60px 15px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+            transition: border-color 0.3s;
+        }
+
+        .query-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .voice-btn {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .voice-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .voice-btn.recording {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            animation: pulse 1.5s infinite;
+        }
+
+        .voice-btn.processing {
+            background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .language-selector {
+            margin-bottom: 15px;
+        }
+
+        .language-select {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: white;
+            cursor: pointer;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-clear {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+        }
+
+        .sample-queries {
+            margin-top: 20px;
+        }
+
+        .sample-query {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .sample-query:hover {
+            background: #667eea;
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .voice-status {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .voice-status.listening {
+            background: #fed7d7;
+            color: #c53030;
+            display: block;
+        }
+
+        .voice-status.processing {
+            background: #feebc8;
+            color: #c05621;
+            display: block;
+        }
+
+        .voice-status.success {
+            background: #c6f6d5;
+            color: #2f855a;
+            display: block;
+        }
+
+        .voice-status.error {
+            background: #fed7d7;
+            color: #c53030;
+            display: block;
+        }
+
+        .results-container {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .sql-query {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .data-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        .data-table td {
+            padding: 10px 8px;
+            border: 1px solid #ddd;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .data-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-healthy { background: #48bb78; }
+        .status-unhealthy { background: #f56565; }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .error {
+            color: #f56565;
+            background: #fed7d7;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .success {
+            color: #38a169;
+            background: #c6f6d5;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        .browser-support-warning {
+            background: #feebc8;
+            color: #c05621;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .main-panel {
+                grid-template-columns: 1fr;
+            }
+            
+            .query-panel {
+                border-right: none;
+                border-bottom: 1px solid #eee;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚔 CCTNS Copilot Engine</h1>
+            <p>AI-Powered Police Data Analysis System with Voice Input</p>
+            <div id="healthStatus" class="loading">Checking system status...</div>
+        </div>
+
+        <div class="main-panel">
+            <div class="query-panel">
+                <h2 class="section-title">🔍 Query Interface</h2>
+                
+                <div class="browser-support-warning" id="browserWarning">
+                    ⚠️ Voice input requires HTTPS or localhost. Make sure your browser supports speech recognition.
+                </div>
+
+                <div class="language-selector">
+                    <label for="languageSelect">🌐 Voice Language:</label>
+                    <select id="languageSelect" class="language-select">
+                        <option value="en-IN">English (India)</option>
+                        <option value="te-IN">Telugu</option>
+                        <option value="hi-IN">Hindi</option>
+                        <option value="en-US">English (US)</option>
+                    </select>
+                </div>
+
+                <div class="voice-status" id="voiceStatus"></div>
+                
+                <div class="input-container">
+                    <textarea 
+                        id="queryInput" 
+                        class="query-input" 
+                        placeholder="Type your query or click the microphone to speak...&#10;&#10;Examples:&#10;• How many FIRs were registered in Guntur district?&#10;• Show me recent arrests&#10;• List all officers in Vijayawada&#10;• Count total crimes this month"
+                    ></textarea>
+                    <button id="voiceBtn" class="voice-btn" title="Click to start voice input">🎤</button>
+                </div>
+                
+                <div>
+                    <button id="submitQuery" class="btn">🚀 Process Query</button>
+                    <button id="clearResults" class="btn btn-clear">🗑️ Clear All</button>
+                </div>
+
+                <div class="sample-queries">
+                    <h3 style="margin-bottom: 15px; color: #4a5568;">📋 Sample Queries:</h3>
+                    <div class="sample-query" data-query="How many FIRs were registered?">
+                        📊 How many FIRs were registered?
+                    </div>
+                    <div class="sample-query" data-query="Show me FIRs from Guntur district">
+                        🏛️ Show me FIRs from Guntur district
+                    </div>
+                    <div class="sample-query" data-query="List all officers in Vijayawada district">
+                        👮 List all officers in Vijayawada district
+                    </div>
+                    <div class="sample-query" data-query="Count total arrests made">
+                        ⚖️ Count total arrests made
+                    </div>
+                    <div class="sample-query" data-query="Show crime statistics by district">
+                        📈 Show crime statistics by district
+                    </div>
+                    <div class="sample-query" data-query="Show top performing officers">
+                        🏆 Show top performing officers
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-panel">
+                <h2 class="section-title">📊 Results</h2>
+                
+                <div id="systemStats" class="stats" style="display: none;">
+                    <!-- Stats will be populated here -->
+                </div>
+                
+                <div id="resultsContainer" class="results-container">
+                    <div class="loading">
+                        💡 Enter a query to see results here.<br><br>
+                        🎤 Click the microphone to speak your query<br>
+                        ⌨️ Or type manually and click Process Query<br>
+                        📋 Or click on any sample query to get started!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let queryCount = 0;
+        let recognition = null;
+        let isListening = false;
+
+        // DOM Elements
+        const queryInput = document.getElementById('queryInput');
+        const submitBtn = document.getElementById('submitQuery');
+        const clearBtn = document.getElementById('clearResults');
+        const voiceBtn = document.getElementById('voiceBtn');
+        const languageSelect = document.getElementById('languageSelect');
+        const voiceStatus = document.getElementById('voiceStatus');
+        const browserWarning = document.getElementById('browserWarning');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const healthStatus = document.getElementById('healthStatus');
+        const systemStats = document.getElementById('systemStats');
+
+        // Initialize speech recognition
+        initializeSpeechRecognition();
+
+        // Check system health on load
+        checkSystemHealth();
+
+        // Event Listeners
+        submitBtn.addEventListener('click', processQuery);
+        clearBtn.addEventListener('click', clearAll);
+        voiceBtn.addEventListener('click', toggleVoiceInput);
+        queryInput.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                processQuery();
+            }
+        });
+
+        // Sample query clicks
+        document.querySelectorAll('.sample-query').forEach(element => {
+            element.addEventListener('click', () => {
+                const query = element.getAttribute('data-query');
+                queryInput.value = query;
+                processQuery();
+            });
+        });
+
+        function initializeSpeechRecognition() {
+            // Check if speech recognition is supported
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+                recognition.lang = languageSelect.value;
+
+                recognition.onstart = function() {
+                    isListening = true;
+                    voiceBtn.classList.add('recording');
+                    voiceBtn.innerHTML = '🔴';
+                    voiceBtn.title = 'Recording... Click to stop';
+                    showVoiceStatus('listening', '🎤 Listening... Speak your query now');
+                };
+
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    queryInput.value = transcript;
+                    showVoiceStatus('success', `✅ Captured: "${transcript}"`);
+                    
+                    // Auto-process the query after a short delay
+                    setTimeout(() => {
+                        processQuery();
+                    }, 1000);
+                };
+
+                recognition.onerror = function(event) {
+                    let errorMessage = 'Voice recognition error';
+                    switch(event.error) {
+                        case 'no-speech':
+                            errorMessage = '🔇 No speech detected. Please try again.';
+                            break;
+                        case 'audio-capture':
+                            errorMessage = '🎤 Microphone not accessible. Please check permissions.';
+                            break;
+                        case 'not-allowed':
+                            errorMessage = '🚫 Microphone permission denied. Please allow microphone access.';
+                            break;
+                        case 'network':
+                            errorMessage = '🌐 Network error. Please check your connection.';
+                            break;
+                        default:
+                            errorMessage = `❌ ${event.error}`;
+                    }
+                    showVoiceStatus('error', errorMessage);
+                };
+
+                recognition.onend = function() {
+                    isListening = false;
+                    voiceBtn.classList.remove('recording', 'processing');
+                    voiceBtn.innerHTML = '🎤';
+                    voiceBtn.title = 'Click to start voice input';
+                    
+                    // Hide status after 3 seconds if it's not an error
+                    setTimeout(() => {
+                        if (!voiceStatus.classList.contains('error')) {
+                            voiceStatus.style.display = 'none';
+                        }
+                    }, 3000);
+                };
+
+                // Update language when changed
+                languageSelect.addEventListener('change', () => {
+                    recognition.lang = languageSelect.value;
+                });
+
+            } else {
+                // Speech recognition not supported
+                voiceBtn.disabled = true;
+                voiceBtn.style.opacity = '0.5';
+                voiceBtn.title = 'Speech recognition not supported in this browser';
+                browserWarning.style.display = 'block';
+                browserWarning.innerHTML = '⚠️ Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari for voice input.';
+            }
+        }
+
+        function toggleVoiceInput() {
+            if (!recognition) return;
+
+            if (isListening) {
+                recognition.stop();
+            } else {
+                try {
+                    recognition.start();
+                } catch (error) {
+                    showVoiceStatus('error', '❌ Could not start voice recognition. Please try again.');
+                }
+            }
+        }
+
+        function showVoiceStatus(type, message) {
+            voiceStatus.className = `voice-status ${type}`;
+            voiceStatus.textContent = message;
+            voiceStatus.style.display = 'block';
+
+            // Auto-hide success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    voiceStatus.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        async function checkSystemHealth() {
+            try {
+                const response = await fetch('/health');
+                const health = await response.json();
+                
+                if (health.status === 'healthy') {
+                    healthStatus.innerHTML = `
+                        <span class="status-indicator status-healthy"></span>
+                        System Status: Healthy | Version: ${health.version} | 🎤 Voice Ready
+                    `;
+                    updateSystemStats(health);
+                } else {
+                    healthStatus.innerHTML = `
+                        <span class="status-indicator status-unhealthy"></span>
+                        System Status: Unhealthy
+                    `;
+                }
+            } catch (error) {
+                healthStatus.innerHTML = `
+                    <span class="status-indicator status-unhealthy"></span>
+                    System Status: Connection Failed
+                `;
+                console.error('Health check failed:', error);
+            }
+        }
+
+        function updateSystemStats(health) {
+            const components = health.components;
+            const stats = [
+                { label: 'STT Processor', value: components.stt_processor ? '✅' : '❌' },
+                { label: 'NL2SQL', value: components.nl2sql_processor ? '✅' : '❌' },
+                { label: 'SQL Executor', value: components.sql_executor ? '✅' : '❌' },
+                { label: 'Report Gen', value: components.report_generator ? '✅' : '❌' }
+            ];
+
+            systemStats.innerHTML = stats.map(stat => `
+                <div class="stat-card">
+                    <div class="stat-number">${stat.value}</div>
+                    <div class="stat-label">${stat.label}</div>
+                </div>
+            `).join('');
+            
+            systemStats.style.display = 'grid';
+        }
+
+        async function processQuery() {
+            const query = queryInput.value.trim();
+            
+            if (!query) {
+                alert('Please enter a query or use voice input');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = '🔄 Processing...';
+
+            // Add loading indicator
+            resultsContainer.innerHTML = `
+                <div class="loading">
+                    🔄 Processing your query: "${query}"<br>
+                    Please wait...
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/query/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: query })
+                });
+
+                const result = await response.json();
+                displayResult(query, result);
+                queryCount++;
+
+            } catch (error) {
+                console.error('Query failed:', error);
+                resultsContainer.innerHTML = `
+                    <div class="error">
+                        ❌ Request failed: ${error.message}<br>
+                        Please check if the server is running.
+                    </div>
+                `;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 Process Query';
+            }
+        }
+
+        function displayResult(originalQuery, result) {
+            const resultHtml = `
+                <div class="result-item">
+                    <h3>Query #${queryCount + 1}</h3>
+                    <p><strong>🗣️ Your Question:</strong> ${originalQuery}</p>
+                    
+                    ${result.success ? `
+                        ${result.sql ? `
+                            <p><strong>🔍 Generated SQL:</strong></p>
+                            <div class="sql-query">${result.sql}</div>
+                        ` : ''}
+                        
+                        ${result.results && result.results.success ? `
+                            <div class="success">
+                                ✅ Query executed successfully! 
+                                Found ${result.results.row_count} result(s) 
+                                in ${(result.results.execution_time * 1000).toFixed(2)}ms
+                            </div>
+                            
+                            ${result.results.data && result.results.data.length > 0 ? `
+                                <p><strong>📊 Results:</strong></p>
+                                ${generateDataTable(result.results.data)}
+                            ` : '<p>No data returned.</p>'}
+                        ` : `
+                            <div class="error">❌ Database execution failed: ${result.results?.error || 'Unknown error'}</div>
+                        `}
+                    ` : `
+                        <div class="error">❌ Query processing failed: ${result.error || 'Unknown error'}</div>
+                        ${result.suggestion ? `<p>💡 Suggestion: ${result.suggestion}</p>` : ''}
+                    `}
+                </div>
+            `;
+
+            if (queryCount === 0) {
+                resultsContainer.innerHTML = resultHtml;
+            } else {
+                resultsContainer.insertAdjacentHTML('afterbegin', resultHtml);
+            }
+        }
+
+        function generateDataTable(data) {
+            if (!data || data.length === 0) return '<p>No data to display.</p>';
+
+            const headers = Object.keys(data[0]);
+            const maxRows = Math.min(data.length, 10); // Limit to 10 rows for display
+
+            let table = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            ${headers.map(header => `<th>${header.replace(/_/g, ' ').toUpperCase()}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            for (let i = 0; i < maxRows; i++) {
+                const row = data[i];
+                table += `
+                    <tr>
+                        ${headers.map(header => `<td title="${row[header]}">${row[header] || ''}</td>`).join('')}
+                    </tr>
+                `;
+            }
+
+            table += `
+                    </tbody>
+                </table>
+            `;
+
+            if (data.length > maxRows) {
+                table += `<p style="margin-top: 10px; color: #666; font-style: italic;">Showing ${maxRows} of ${data.length} results</p>`;
+            }
+
+            return table;
+        }
+
+        function clearAll() {
+            // Clear the input field
+            queryInput.value = '';
+            
+            // Clear results
+            resultsContainer.innerHTML = `
+                <div class="loading">
+                    💡 Enter a query to see results here.<br><br>
+                    🎤 Click the microphone to speak your query<br>
+                    ⌨️ Or type manually and click Process Query<br>
+                    📋 Or click on any sample query to get started!
+                </div>
+            `;
+            
+            // Hide voice status
+            voiceStatus.style.display = 'none';
+            
+            // Reset query count
+            queryCount = 0;
+            
+            // Focus back on input
+            queryInput.focus();
+        }
+
+        // Auto-focus on query input
+        queryInput.focus();
+
+        // Check for HTTPS/localhost for speech recognition
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+            browserWarning.style.display = 'block';
+            browserWarning.innerHTML = '⚠️ Voice input works best on HTTPS or localhost. Some browsers may restrict microphone access on HTTP.';
+        }
+    </script>
+</body>
+</html>

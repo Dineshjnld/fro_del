@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot UI</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="chat-container">
+        <div id="chat-display" class="chat-display">
+            <!-- Chat messages will appear here -->
+        </div>
+        <div class="input-area">
+            <input type="text" id="text-input" placeholder="Type your message or use the mic...">
+            <button id="mic-button">🎤</button>
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <div class="results-container">
+        <div class="query-display">
+            <h3>Generated SQL Query:</h3>
+            <pre id="sql-query-display">-- SQL query will appear here --</pre>
+        </div>
+        <div class="table-display">
+            <h3>Resulting Table:</h3>
+            <div id="data-table-display">
+                -- Data table will appear here --
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

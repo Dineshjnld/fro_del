@@ -1,0 +1,314 @@
+# CCTNS Copilot Engine - AI Models Configuration
+# This file contains configuration for all AI/ML models used in the system
+
+# Model Cache and Storage
+model_storage:
+  cache_dir: "./models_cache"
+  max_cache_size_gb: 50
+  auto_cleanup: true
+  cleanup_threshold_days: 30
+
+# Hardware Configuration
+hardware:
+  use_gpu: true
+  gpu_memory_fraction: 0.8
+  cpu_cores: -1  # Use all available cores
+  mixed_precision: true
+
+# Speech-to-Text Models
+speech_to_text:
+  primary:
+    name: "ai4bharat/indicconformer"
+    model_type: "wav2vec2"
+    language_support: ["te", "hi", "en-IN"]
+    confidence_threshold: 0.7
+    device: "auto"  # auto-detect GPU/CPU
+    batch_size: 1
+    sample_rate: 16000
+    max_audio_length: 300  # seconds
+    preprocessing:
+      normalize_audio: true
+      remove_silence: true
+      noise_reduction: true
+    
+  fallback:
+    name: "openai/whisper-medium"
+    model_type: "whisper"
+    language_support: ["te", "hi", "en", "auto"]
+    confidence_threshold: 0.6
+    device: "auto"
+    temperature: 0.0
+    beam_size: 5
+    best_of: 5
+    
+  # Language-specific models
+  language_models:
+    telugu:
+      primary: "ai4bharat/indicconformer_te"
+      fallback: "openai/whisper-medium"
+    hindi:
+      primary: "ai4bharat/indicconformer_hi" 
+      fallback: "openai/whisper-medium"
+    english:
+      primary: "openai/whisper-medium"
+      fallback: "wav2vec2-base-960h"
+
+# Text Processing Models
+text_processing:
+  grammar_correction:
+    name: "google/flan-t5-base"
+    temperature: 0.3
+    max_length: 200
+    min_length: 10
+    num_beams: 4
+    early_stopping: true
+    
+  enhancement:
+    name: "microsoft/DialoGPT-medium"
+    temperature: 0.1
+    max_length: 100
+    top_p: 0.9
+    repetition_penalty: 1.1
+    
+  language_detection:
+    name: "facebook/fasttext-langdetect"
+    confidence_threshold: 0.8
+    supported_languages: ["te", "hi", "en"]
+    
+  translation:
+    english_to_telugu:
+      name: "ai4bharat/indictrans2-en-indic"
+      beam_size: 4
+      temperature: 0.0
+    telugu_to_english:
+      name: "ai4bharat/indictrans2-indic-en"
+      beam_size: 4
+      temperature: 0.0
+
+# Natural Language to SQL Models
+nl2sql:
+  primary:
+    name: "microsoft/CodeT5-base"
+    model_type: "code_generation"
+    temperature: 0.1
+    max_length: 300
+    min_length: 20
+    beam_size: 5
+    early_stopping: true
+    
+  fallback:
+    name: "rule_based"
+    confidence_threshold: 0.8
+    template_matching: true
+    
+  preprocessing:
+    normalize_entities: true
+    expand_abbreviations: true
+    correct_spelling: true
+    
+  postprocessing:
+    validate_syntax: true
+    sanitize_queries: true
+    add_limits: true
+    max_result_rows: 1000
+
+# Text Summarization Models
+summarization:
+  report_summary:
+    name: "google/pegasus-cnn_dailymail"
+    max_length: 150
+    min_length: 30
+    num_beams: 4
+    temperature: 0.7
+    length_penalty: 2.0
+    
+  query_summary:
+    name: "facebook/bart-large-cnn"
+    max_length: 100
+    min_length: 20
+    num_beams: 3
+    temperature: 0.5
+
+# Named Entity Recognition
+ner:
+  police_entities:
+    name: "custom/police-ner-model"
+    entities: ["PERSON", "LOCATION", "CRIME_TYPE", "DATE", "STATION", "DISTRICT"]
+    confidence_threshold: 0.8
+    
+  general_entities:
+    name: "dbmdz/bert-large-cased-finetuned-conll03-english"
+    entities: ["PER", "LOC", "ORG", "MISC"]
+
+# Embeddings and Similarity
+embeddings:
+  sentence_embeddings:
+    name: "sentence-transformers/all-MiniLM-L6-v2"
+    dimension: 384
+    
+  query_similarity:
+    name: "sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
+    threshold: 0.7
+
+# CCTNS Database Schema Configuration
+cctns_schema:
+  database_type: "oracle"
+  schema_version: "2.0"
+  
+  # Master Tables
+  tables:
+    - name: "DISTRICT_MASTER"
+      type: "master"
+      columns: ["district_id", "district_code", "district_name", "state_code", "created_date"]
+      primary_key: "district_id"
+      description: "District master data for administrative divisions"
+      
+    - name: "STATION_MASTER"
+      type: "master"
+      columns: ["station_id", "station_name", "station_code", "district_id", "latitude", "longitude"]
+      primary_key: "station_id"
+      foreign_keys: 
+        - column: "district_id"
+          references: "DISTRICT_MASTER.district_id"
+      description: "Police station master data"
+      
+    - name: "OFFICER_MASTER"
+      type: "master"
+      columns: ["officer_id", "officer_name", "rank", "badge_number", "station_id", "mobile_number"]
+      primary_key: "officer_id"
+      foreign_keys:
+        - column: "station_id"
+          references: "STATION_MASTER.station_id"
+      description: "Police officer master data"
+      
+    - name: "CRIME_TYPE_MASTER"
+      type: "master"
+      columns: ["crime_type_id", "crime_code", "crime_description", "ipc_section", "severity_level"]
+      primary_key: "crime_type_id"
+      description: "Crime type classifications and IPC sections"
+      
+    # Transaction Tables
+    - name: "FIR"
+      type: "transaction"
+      columns: ["fir_id", "fir_number", "district_id", "station_id", "crime_type_id", "incident_date", "report_date", "status", "complainant_name"]
+      primary_key: "fir_id"
+      foreign_keys:
+        - column: "district_id"
+          references: "DISTRICT_MASTER.district_id"
+        - column: "station_id"
+          references: "STATION_MASTER.station_id"
+        - column: "crime_type_id"
+          references: "CRIME_TYPE_MASTER.crime_type_id"
+      description: "First Information Report records"
+      
+    - name: "ARREST"
+      type: "transaction"
+      columns: ["arrest_id", "fir_id", "officer_id", "arrested_person_name", "arrest_date", "arrest_location"]
+      primary_key: "arrest_id"
+      foreign_keys:
+        - column: "fir_id"
+          references: "FIR.fir_id"
+        - column: "officer_id"
+          references: "OFFICER_MASTER.officer_id"
+      description: "Arrest records linked to FIRs"
+
+# Police Terminology and Corrections
+police_terminology:
+  abbreviations:
+    "fir": "FIR"
+    "sho": "SHO"
+    "asi": "ASI"
+    "si": "SI"
+    "ci": "CI"
+    "sp": "SP"
+    "ig": "IG"
+    "dgp": "DGP"
+    
+  corrections:
+    "station house officer": "SHO"
+    "assistant sub inspector": "ASI"
+    "sub inspector": "SI"
+    "circle inspector": "CI"
+    "superintendent of police": "SP"
+    "inspector general": "IG"
+    "director general of police": "DGP"
+    
+  districts:
+    andhra_pradesh:
+      - "Guntur"
+      - "Vijayawada"
+      - "Visakhapatnam"
+      - "Tirupati"
+      - "Kurnool"
+      - "Nellore"
+      - "Kadapa"
+      - "Chittoor"
+      - "Krishna"
+      - "West Godavari"
+      - "East Godavari"
+      - "Srikakulam"
+      - "Vizianagaram"
+      - "Anantapur"
+      - "Prakasam"
+      
+  crime_types:
+    - "Murder"
+    - "Theft"
+    - "Robbery"
+    - "Burglary"
+    - "Assault"
+    - "Rape"
+    - "Kidnapping"
+    - "Fraud"
+    - "Cybercrime"
+    - "Drug Trafficking"
+    - "Domestic Violence"
+    - "Traffic Violation"
+
+# Query Processing Configuration
+query_processing:
+  max_query_length: 500
+  timeout_seconds: 30
+  max_results: 1000
+  enable_query_caching: true
+  cache_ttl_minutes: 60
+  
+  # Query validation rules
+  allowed_operations: ["SELECT"]
+  blocked_keywords: ["DROP", "DELETE", "UPDATE", "INSERT", "TRUNCATE", "ALTER"]
+  
+  # Result formatting
+  date_format: "DD-MM-YYYY"
+  number_format: "indian"
+  include_metadata: true
+
+# Logging Configuration for Models
+logging:
+  model_performance: true
+  query_logging: true
+  error_tracking: true
+  metrics_collection: true
+  
+  log_levels:
+    speech_to_text: "INFO"
+    nl2sql: "DEBUG"
+    database: "INFO"
+    api: "INFO"
+
+# Performance Monitoring
+performance:
+  enable_metrics: true
+  metrics_endpoint: "/metrics"
+  health_check_endpoint: "/health"
+  
+  thresholds:
+    stt_response_time_ms: 5000
+    sql_generation_time_ms: 2000
+    query_execution_time_ms: 10000
+    total_response_time_ms: 15000
+  
+  alerts:
+    enable_alerts: true
+    alert_endpoints: []
+    error_threshold_percent: 5
+    response_time_threshold_ms: 20000
