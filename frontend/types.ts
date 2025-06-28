@@ -16,3 +16,23 @@ export interface QueryResult {
 }
 
 export type Status = 'idle' | 'listening' | 'loading' | 'error';
+
+// Voice-related types
+export interface VoiceTranscriptionResult {
+  text: string;
+  confidence: number;
+  language: string;
+  modelUsed: string;
+  enhanced?: {
+    enhancedText: string;
+    corrections: string[];
+    confidence: number;
+  };
+}
+
+export interface VoiceRecordingState {
+  isRecording: boolean;
+  isProcessing: boolean;
+  error: string | null;
+  language: string;
+}
