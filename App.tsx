@@ -1,12 +1,10 @@
-
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import type { Chat } from '@google/genai';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Header } from './components/Header';
 import { ChatHistory } from './components/ChatHistory';
 import { QueryInput } from './components/QueryInput';
 import { ResultsDisplay } from './components/ResultsDisplay';
-import { initChat, generateSqlAndSummary } from './services/geminiService';
-import { executeQuery } from './services/mockDbService';
+import { VoiceInput } from './components/VoiceInput'; // Import VoiceInput
+import { processQueryWithBackend } from './services/apiService'; // Import backend service
 import type { Message, QueryResult, Status } from './types';
 
 const App: React.FC = () => {
@@ -14,26 +12,17 @@ const App: React.FC = () => {
   const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState<string | null>(null);
-  const chatRef = useRef<Chat | null>(null);
+  // chatRef and initChat related to @google/genai are removed
 
   useEffect(() => {
-    const initializeChat = () => {
-      try {
-        chatRef.current = initChat();
-        setMessages([
-          {
-            sender: 'ai',
-            type: 'text',
-            content: 'Welcome to the CCTNS Copilot. How can I help you access crime data today? You can ask things like "Show total crimes in Guntur" or "List arrests by Officer Kumar last month".'
-          }
-        ]);
-      } catch (e) {
-        console.error("Failed to initialize chat:", e);
-        setError("Could not initialize the AI Copilot. Please check your API key and refresh.");
-        setStatus('error');
+    // Simplified initial message
+    setMessages([
+      {
+        sender: 'ai',
+        type: 'text',
+        content: 'Welcome to the CCTNS Copilot. How can I help you today? Type your query or use the voice input.'
       }
-    };
-    initializeChat();
+    ]);
   }, []);
 
   const handleQuerySubmit = useCallback(async (query: string) => {
@@ -41,51 +30,80 @@ const App: React.FC = () => {
 
     setStatus('loading');
     setError(null);
-    setQueryResult(null);
+    // setQueryResult(null); // Keep previous results visible while loading new ones for better UX
 
     const userMessage: Message = { sender: 'user', type: 'text', content: query };
     setMessages(prev => [...prev, userMessage]);
 
-    if (!chatRef.current) {
-      setError("AI chat is not initialized.");
-      setStatus('error');
-      return;
-    }
-
     try {
-      // Step 1: Generate SQL from natural language
-      setMessages(prev => [...prev, { sender: 'ai', type: 'status', content: 'Understood. Translating your request into a database query...' }]);
-      const { sql, summary } = await generateSqlAndSummary(chatRef.current, query);
+      setMessages(prev => [...prev, { sender: 'ai', type: 'status', content: 'Processing your request...' }]);
       
-      const aiSqlMessage: Message = { sender: 'ai', type: 'sql', content: sql, summary: summary };
-      setMessages(prev => [...prev.slice(0, -1), aiSqlMessage]);
+      const backendResponse = await processQueryWithBackend(query);
 
-      // Step 2: Execute the query (mocked)
-      setMessages(prev => [...prev, { sender: 'ai', type: 'status', content: 'Query generated. Fetching data from the CCTNS database...' }]);
-      const results = await executeQuery(sql);
-      setQueryResult(results);
+      // Remove the "Processing..." status message
+      setMessages(prev => prev.filter(msg => !(msg.type === 'status' && msg.sender === 'ai')));
 
-       setMessages(prev => prev.slice(0, -1)); // Remove "Fetching data..." status
+      if (backendResponse.success && backendResponse.sql && backendResponse.results) {
+        const aiSqlMessage: Message = {
+          sender: 'ai',
+          type: 'sql',
+          content: backendResponse.sql,
+          summary: backendResponse.summary || `Found ${backendResponse.results.row_count || 0} results.`
+        };
+        setMessages(prev => [...prev, aiSqlMessage]);
 
+        // Transform backend results to QueryResult format
+        const newQueryResult: QueryResult = {
+          columns: backendResponse.results.columns || (backendResponse.results.data && backendResponse.results.data.length > 0 ? Object.keys(backendResponse.results.data[0]) : []),
+          rows: backendResponse.results.data || [],
+          query: backendResponse.sql,
+        };
+        setQueryResult(newQueryResult);
+
+      } else {
+        // Handle errors or cases where SQL/results might not be present
+        const errorMessageContent = backendResponse.error || backendResponse.suggestion || 'Sorry, I could not process that request.';
+        setError(errorMessageContent);
+        const aiErrorMessage: Message = { sender: 'ai', type: 'error', content: errorMessageContent };
+        setMessages(prev => [...prev, aiErrorMessage]);
+        setQueryResult(null); // Clear previous results on error
+      }
 
     } catch (e) {
       console.error(e);
       const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
-      setError(`Failed to process your request. ${errorMessage}`);
-      const aiErrorMessage: Message = { sender: 'ai', type: 'error', content: `I'm sorry, I encountered an error trying to process that: ${errorMessage}` };
-      setMessages(prev => [...prev.slice(0,-1), aiErrorMessage]);
+      setError(`Failed to process your request: ${errorMessage}`);
+      const aiErrorMessage: Message = { sender: 'ai', type: 'error', content: `I'm sorry, I encountered an error: ${errorMessage}` };
+      // Ensure status message is removed before adding error message
+      setMessages(prev => [...prev.filter(msg => !(msg.type === 'status' && msg.sender === 'ai')), aiErrorMessage]);
+      setQueryResult(null); // Clear previous results on error
     } finally {
       setStatus('idle');
     }
   }, []);
 
+  const handleTranscription = (transcribedText: string) => {
+    if (transcribedText) {
+      // Optionally, add the transcribed text as a user message before submitting
+      // const userMessage: Message = { sender: 'user', type: 'text', content: transcribedText };
+      // setMessages(prev => [...prev, userMessage]);
+      handleQuerySubmit(transcribedText);
+    }
+  };
+
   return (
-    <div className="flex flex-col h-screen font-sans bg-gray-50">
+    <div className="flex flex-col h-screen font-sans bg-gray-50 text-gray-800">
       <Header />
-      <main className="flex-1 overflow-hidden flex">
-        <div className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 overflow-hidden flex flex-col md:flex-row">
+        <div className="flex-1 flex flex-col overflow-hidden p-4 space-y-4">
           <ChatHistory messages={messages} />
-          {error && <div className="px-4 py-2 text-red-700 bg-red-100 border-t border-red-200">{error}</div>}
+          {error && (
+            <div className="px-4 py-3 text-red-700 bg-red-100 border border-red-300 rounded-md shadow-sm">
+              <strong>Error:</strong> {error}
+            </div>
+          )}
+           {/* Voice Input Component */}
+          <VoiceInput onTranscription={handleTranscription} disabled={status === 'loading'} />
           <QueryInput onSubmit={handleQuerySubmit} status={status} />
         </div>
         <ResultsDisplay result={queryResult} status={status} />
